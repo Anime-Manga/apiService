@@ -7,10 +7,10 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 
-COPY ["src/Cesxhin.AnimeManga/Cesxhin.AnimeManga.Api/", "./Cesxhin.AnimeManga.Api/"]
-COPY ["src/references/Cesxhin.AnimeManga/Cesxhin.AnimeManga.Domain/", "./Cesxhin.AnimeManga.Domain/"]
-COPY ["src/references/Cesxhin.AnimeManga/Cesxhin.AnimeManga.Persistence/", "./Cesxhin.AnimeManga.Persistence/"]
-COPY ["src/references/Cesxhin.AnimeManga/Cesxhin.AnimeManga.Application/", "./Cesxhin.AnimeManga.Application/"]
+COPY ["src/Cesxhin.AnimeManga.Api/", "./Cesxhin.AnimeManga.Api/"]
+COPY ["src/references/Cesxhin.AnimeManga.Domain/", "./Cesxhin.AnimeManga.Domain/"]
+COPY ["src/references/Cesxhin.AnimeManga.Persistence/", "./Cesxhin.AnimeManga.Persistence/"]
+COPY ["src/references/Cesxhin.AnimeManga.Application/", "./Cesxhin.AnimeManga.Application/"]
 
 RUN dotnet restore "./Cesxhin.AnimeManga.Api/Cesxhin.AnimeManga.Api.csproj"
 

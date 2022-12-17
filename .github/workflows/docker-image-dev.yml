@@ -25,6 +25,6 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        file: src/Cesxhin.AnimeManga.Api/Dockerfile
+        file: Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USER }}/animemanga-apiservice:1.0.0_DEV

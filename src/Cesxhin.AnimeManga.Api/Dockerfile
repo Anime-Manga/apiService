@@ -8,9 +8,9 @@ FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 
 COPY ["src/Cesxhin.AnimeManga.Api/", "./Cesxhin.AnimeManga.Api/"]
-COPY ["src/references/Cesxhin.AnimeManga.Domain/", "./Cesxhin.AnimeManga.Domain/"]
-COPY ["src/references/Cesxhin.AnimeManga.Persistence/", "./Cesxhin.AnimeManga.Persistence/"]
-COPY ["src/references/Cesxhin.AnimeManga.Application/", "./Cesxhin.AnimeManga.Application/"]
+COPY ["src/references/Cesxhin.AnimeManga.Domain/", "./references/Cesxhin.AnimeManga.Domain/"]
+COPY ["src/references/Cesxhin.AnimeManga.Persistence/", "./references/Cesxhin.AnimeManga.Persistence/"]
+COPY ["src/references/Cesxhin.AnimeManga.Application/", "./references/Cesxhin.AnimeManga.Application/"]
 
 RUN dotnet restore "./Cesxhin.AnimeManga.Api/Cesxhin.AnimeManga.Api.csproj"
 

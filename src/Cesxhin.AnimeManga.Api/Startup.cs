@@ -11,9 +11,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json.Linq;
 using NLog;
 using Quartz;
 using System;
+using System.Collections.Generic;
 
 namespace Cesxhin.AnimeManga.Api
 {
@@ -22,6 +24,49 @@ namespace Cesxhin.AnimeManga.Api
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+
+            //check valid schema
+            Console.WriteLine("[STARTUP] Check schemas");
+            var schemasFile = System.IO.File.ReadAllText(".\\schemas.json");
+            var schemas = JObject.Parse(schemasFile);
+            var checkArray = new List<bool>();
+
+            foreach (var schema in schemas)
+            {
+                var selectSchema = schemas.GetValue(schema.Key).ToObject<JObject>();
+
+                checkArray.Add(selectSchema.ContainsKey("name") && selectSchema.GetValue("name").Type == JTokenType.String);
+                checkArray.Add(selectSchema.ContainsKey("type") && selectSchema.GetValue("type").Type == JTokenType.String);
+                checkArray.Add(selectSchema.ContainsKey("url_search") && selectSchema.GetValue("url_search").Type == JTokenType.String);
+                checkArray.Add(selectSchema.ContainsKey("description") && selectSchema.GetValue("description").Type == JTokenType.Object);
+                checkArray.Add(selectSchema.ContainsKey("video") && selectSchema.GetValue("video").Type == JTokenType.Object);
+
+
+                checkArray.Add(selectSchema.GetValue("description").ToObject<JObject>().ContainsKey("name_id"));
+                checkArray.Add(selectSchema.GetValue("description").ToObject<JObject>().ContainsKey("cover"));
+
+                foreach (var selectDescription in selectSchema.GetValue("description").ToObject<JObject>())
+                {
+                    var description = selectDescription.Value.ToObject<JObject>();
+
+                    checkArray.Add(description.ContainsKey("type") && description.GetValue("type").Type == JTokenType.Array);
+
+                    if(description.ContainsKey("child_nodes"))
+                        checkArray.Add(description.GetValue("child_nodes").Type == JTokenType.Integer);
+
+                    checkArray.Add(description.ContainsKey("path"));
+                }
+            }
+
+            var result = checkArray.FindAll(value => value == false);
+
+            if(result.Count > 0)
+            {
+                Console.WriteLine("[STARTUP] FATAL Wrong schemas");
+                throw new Exception();
+            }
+            Console.WriteLine("[STARTUP] Ok schemas");
         }
 
         public IConfiguration Configuration { get; }
@@ -31,20 +76,20 @@ namespace Cesxhin.AnimeManga.Api
         {
             //interfaces
             //services
-            services.AddSingleton<IAnimeService, AnimeService>();
             services.AddSingleton<IEpisodeService, EpisodeService>();
             services.AddSingleton<IEpisodeRegisterService, EpisodeRegisterService>();
             services.AddSingleton<IChapterRegisterService, ChapterRegisterService>();
             services.AddSingleton<IChapterService, ChapterService>();
             services.AddSingleton<IMangaService, MangaService>();
+            services.AddSingleton<IDescriptionService, DescriptionService>();
 
             //repositories
-            services.AddSingleton<IAnimeRepository, AnimeRepository>();
             services.AddSingleton<IEpisodeRepository, EpisodeRepository>();
             services.AddSingleton<IEpisodeRegisterRepository, EpisodeRegisterRepository>();
             services.AddSingleton<IChapterRegisterRepository, ChapterRegisterRepository>();
             services.AddSingleton<IChapterRepository, ChapterRepository>();
             services.AddSingleton<IMangaRepository, MangaRepository>();
+            services.AddSingleton<IDescriptionRepository, DescriptionRepository>();
 
             //init repoDb
             RepoDb.PostgreSqlBootstrap.Initialize();
@@ -84,7 +129,7 @@ namespace Cesxhin.AnimeManga.Api
             });
 
             //setup nlog
-            var level = Environment.GetEnvironmentVariable("LOG_LEVEL").ToLower() ?? "info";
+            var level = Environment.GetEnvironmentVariable("LOG_LEVEL")?.ToLower() ?? "info";
             LogLevel logLevel = NLogManager.GetLevel(level);
             NLogManager.Configure(logLevel);
 

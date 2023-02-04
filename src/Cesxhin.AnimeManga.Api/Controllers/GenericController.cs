@@ -2,6 +2,7 @@
 using Cesxhin.AnimeManga.Domain.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -13,15 +14,15 @@ namespace Cesxhin.AnimeManga.Api.Controllers
     public class GenericController : ControllerBase
     {
         //interfaces
-        private readonly IAnimeService _animeService;
+        private readonly IDescriptionService _descriptionService;
         private readonly IMangaService _mangaService;
 
         public GenericController(
-            IAnimeService animeService,
+            IDescriptionService descriptionService,
             IMangaService mangaService
             )
         {
-            _animeService = animeService;
+            _descriptionService = descriptionService;
             _mangaService = mangaService;
         }
 
@@ -43,7 +44,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //get all db
         [HttpGet("/all")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Tuple<GenericAnimeDTO, GenericMangaDTO>>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Tuple<JObject, GenericMangaDTO>>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
@@ -51,7 +52,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 List<object> listGeneric = new();
-                var listAnime = await _animeService.GetNameAllAsync();
+                var listAnime = await _descriptionService.GetNameAllAsync();
                 var listManga = await _mangaService.GetNameAllAsync();
 
                 if(listAnime != null)

@@ -1,5 +1,4 @@
-﻿using Cesxhin.AnimeManga.Application.HtmlAgilityPack;
-using Cesxhin.AnimeManga.Application.Interfaces.Controllers;
+﻿using Cesxhin.AnimeManga.Application.Interfaces.Controllers;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
 using Cesxhin.AnimeManga.Application.NlogManager;
 using Cesxhin.AnimeManga.Domain.DTO;
@@ -10,15 +9,17 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
+using Cesxhin.AnimeManga.Application.HtmlAgilityPack;
 
 namespace Cesxhin.AnimeManga.Api.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class AnimeController : ControllerBase, IGeneralControllerBase<AnimeDTO, EpisodeDTO, EpisodeRegisterDTO, DownloadDTO>
+    public class AnimeController : ControllerBase, IGeneralControllerBase<string, EpisodeDTO, EpisodeRegisterDTO, DownloadDTO>
     {
         //interfaces
-        private readonly IAnimeService _animeService;
+        private readonly IDescriptionService _descriptionService;
         private readonly IEpisodeService _episodeService;
         private readonly IEpisodeRegisterService _episodeRegisterService;
         private readonly IBus _publishEndpoint;
@@ -30,33 +31,33 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         private readonly string _folder = Environment.GetEnvironmentVariable("BASE_PATH") ?? "/";
 
         public AnimeController(
-            IAnimeService animeService,
             IEpisodeService episodeService,
             IEpisodeRegisterService episodeRegisterService,
+            IDescriptionService descriptionService,
             IBus publishEndpoint
             )
         {
-            _animeService = animeService;
+            _descriptionService = descriptionService;
             _episodeService = episodeService;
             _episodeRegisterService = episodeRegisterService;
             _publishEndpoint = publishEndpoint;
         }
 
         //get list all anime without filter
-        [HttpGet("/anime")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<AnimeDTO>))]
+        [HttpGet("/video")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetInfoAll()
         {
             try
             {
-                var listAnime = await _animeService.GetNameAllAsync();
+                var listAll = await _descriptionService.GetNameAllAsync();
 
-                if (listAnime == null)
+                if (listAll == null)
                     return NotFound();
 
-                return Ok(listAnime);
+                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listAll));
             }
             catch
             {
@@ -65,20 +66,20 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //get anime by name
-        [HttpGet("/anime/name/{name}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AnimeDTO))]
+        [HttpGet("/video/name/{name}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetInfoByName(string name)
         {
             try
             {
-                var anime = await _animeService.GetNameByNameAsync(name);
+                var description = await _descriptionService.GetNameByNameAsync(name);
 
-                if (anime == null)
+                if (description == null)
                     return NotFound();
 
-                return Ok(anime);
+                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
             }
             catch
             {
@@ -87,20 +88,20 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //get list anime by start name similar
-        [HttpGet("/anime/names/{name}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<AnimeDTO>))]
+        [HttpGet("/video/names/{name}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetMostInfoByName(string name)
         {
             try
             {
-                var anime = await _animeService.GetMostNameByNameAsync(name);
+                var description = await _descriptionService.GetMostNameByNameAsync(name);
 
-                if (anime == null)
+                if (description == null)
                     return NotFound();
 
-                return Ok(anime);
+                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
             }
             catch
             {
@@ -175,21 +176,21 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //insert anime
-        [HttpPost("/anime")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(AnimeDTO))]
+        [HttpPost("/video")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PutInfo(AnimeDTO infoClass)
+        public async Task<IActionResult> PutInfo(string description)
         {
             try
             {
                 //insert
-                var animeResult = await _animeService.InsertNameAsync(infoClass);
+                var descriptionResult = await _descriptionService.InsertNameAsync(JObject.Parse(description));
 
-                if (animeResult == null)
+                if (descriptionResult == null)
                     return Conflict();
 
-                return Created("none", animeResult);
+                return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(descriptionResult));
             }
             catch
             {
@@ -287,29 +288,28 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //put anime into db
-        [HttpPost("/anime/download")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(AnimeDTO))]
+        [HttpPost("/video/download")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO downloadClass)
         {
             try
             {
+                JObject cfg = null;
+                //read schema
+                try
+                {
+                    cfg = RipperSchema.readFile(downloadClass.nameCfg);
+                }
+                catch(Exception e)
+                {
+                    return NotFound();
+                }
+
                 //get anime and episodes
-                var anime = HtmlAnimeSaturn.GetAnime(downloadClass.Url);
-                var episodes = HtmlAnimeSaturn.GetEpisodes(downloadClass.Url, anime.Name);
-
-                //insert anime
-                var animeResult = await _animeService.InsertNameAsync(anime);
-
-                if (animeResult == null)
-                    return Conflict();
-
-                //insert episodes
-                var episodeResult = await _episodeService.InsertObjectsAsync(episodes);
-
-                if (episodeResult == null)
-                    return Conflict();
+                var description = RipperVideoGeneric.GetAnime(cfg, downloadClass.Url);
+                var episodes = RipperVideoGeneric.GetEpisodes(cfg, downloadClass.Url, description["name_id"].ToString());
 
                 var listEpisodeRegister = new List<EpisodeRegisterDTO>();
 
@@ -318,9 +318,20 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     listEpisodeRegister.Add(new EpisodeRegisterDTO
                     {
                         EpisodeId = episode.ID,
-                        EpisodePath = $"{_folder}/{episode.AnimeId}/Season {episode.NumberSeasonCurrent.ToString("D2")}/{episode.AnimeId} s{episode.NumberSeasonCurrent.ToString("D2")}e{episode.NumberEpisodeCurrent.ToString("D2")}.mp4"
+                        EpisodePath = $"{_folder}/{episode.VideoId}/Season {episode.NumberSeasonCurrent.ToString("D2")}/{episode.VideoId} s{episode.NumberSeasonCurrent.ToString("D2")}e{episode.NumberEpisodeCurrent.ToString("D2")}.mp4"
                     });
                 }
+
+                var descriptionResult = await _descriptionService.InsertNameAsync(JObject.Parse(description.ToString()));
+
+                if (descriptionResult == null)
+                    return Conflict();
+
+                //insert episodes
+                var episodeResult = await _episodeService.InsertObjectsAsync(episodes);
+
+                if (episodeResult == null)
+                    return Conflict();
 
                 //insert episodesRegisters
                 var episodeRegisterResult = await _episodeRegisterService.InsertObjectsRegistersAsync(listEpisodeRegister);
@@ -329,14 +340,14 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     return Conflict();
 
                 //create message for notify
-                string message = $"🧮ApiService say: \nAdd new Anime: {anime.Name}\n";
+                string message = $"🧮ApiService say: \nAdd new Anime: {description["name_id"]}\n";
 
                 try
                 {
                     var messageNotify = new NotifyDTO
                     {
                         Message = message,
-                        Image = anime.Image
+                        Image = description["cover"].ToString()
                     };
                     await _publishEndpoint.Publish(messageNotify);
                 }
@@ -345,7 +356,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
                 }
 
-                return Created("none", animeResult);
+                return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(descriptionResult));
             }
             catch
             {
@@ -354,7 +365,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //reset state download of episodeRegister into db
-        [HttpPut("/anime/redownload")]
+        [HttpPut("/video/redownload")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RedownloadObjectByUrlPage(List<EpisodeDTO> objectsClass)
@@ -374,9 +385,9 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             }
         }
 
-        //delete anime
-        [HttpDelete("/anime/{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AnimeDTO))]
+        //delete description
+        [HttpDelete("/video/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteInfo(string id)
@@ -384,7 +395,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 //insert
-                var animeResult = await _animeService.DeleteNameByIdAsync(id);
+                var animeResult = await _descriptionService.DeleteNameByIdAsync(id);
 
                 if (animeResult == null)
                     return NotFound();
@@ -416,20 +427,20 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //get all db anime
-        [HttpGet("/anime/all")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<GenericAnimeDTO>))]
+        [HttpGet("/video/all")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
         {
             try
             {
-                var listAnime = await _animeService.GetNameAllWithAllAsync();
+                var listDescription = await _descriptionService.GetNameAllWithAllAsync();
 
-                if (listAnime == null)
+                if (listDescription == null)
                     return NotFound();
 
-                return Ok(listAnime);
+                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listDescription));
             }
             catch
             {
@@ -438,7 +449,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //get list name by external db
-        [HttpGet("/anime/list/name/{name}")]
+        [HttpGet("/video/list/name/{name}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericUrlDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -446,22 +457,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         {
             try
             {
-                var animeUrls = HtmlAnimeSaturn.GetAnimeUrl(name);
-                if (animeUrls != null || animeUrls.Count >= 0)
+                var descriptionUrls = RipperVideoGeneric.GetAnimeUrl(name);
+                if (descriptionUrls != null || descriptionUrls.Count >= 0)
                 {
                     //list anime
                     List<GenericUrlDTO> list = new();
 
-                    foreach (var animeUrl in animeUrls)
+                    foreach (var descrptionUrl in descriptionUrls)
                     {
-                        var animeUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(animeUrl);
+                        var descriptionUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(descrptionUrl);
 
                         //check if already exists
-                        var anime = await _episodeService.GetObjectsByNameAsync(animeUrlDTO.Name);
-                        if (anime != null)
-                            animeUrlDTO.Exists = true;
+                        var description = await _episodeService.GetObjectsByNameAsync(descriptionUrlDTO.Name);
+                        if (description != null)
+                            descriptionUrlDTO.Exists = true;
 
-                        list.Add(animeUrlDTO);
+                        list.Add(descriptionUrlDTO);
                     }
                     return Ok(list);
                 }
@@ -474,7 +485,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //update status episode
-        [HttpPut("/anime/statusDownload")]
+        [HttpPut("/video/statusDownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(EpisodeDTO))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PutUpdateStateDownload(EpisodeDTO objectClass)
@@ -482,11 +493,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 //update
-                var rs = await _episodeService.UpdateStateDownloadAsync(objectClass);
-                if (rs == null)
+                var resultEpisode = await _episodeService.UpdateStateDownloadAsync(objectClass);
+                if (resultEpisode == null)
                     return NotFound();
 
-                return Ok(rs);
+                return Ok(resultEpisode);
             }
             catch
             {

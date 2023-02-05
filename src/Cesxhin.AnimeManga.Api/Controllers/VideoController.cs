@@ -19,7 +19,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
     public class AnimeController : ControllerBase, IGeneralControllerBase<string, EpisodeDTO, EpisodeRegisterDTO, DownloadDTO>
     {
         //interfaces
-        private readonly IDescriptionService _descriptionService;
+        private readonly IDescriptionVideoService _descriptionService;
         private readonly IEpisodeService _episodeService;
         private readonly IEpisodeRegisterService _episodeRegisterService;
         private readonly IBus _publishEndpoint;
@@ -33,7 +33,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         public AnimeController(
             IEpisodeService episodeService,
             IEpisodeRegisterService episodeRegisterService,
-            IDescriptionService descriptionService,
+            IDescriptionVideoService descriptionService,
             IBus publishEndpoint
             )
         {

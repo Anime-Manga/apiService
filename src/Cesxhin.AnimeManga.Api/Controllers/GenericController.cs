@@ -14,11 +14,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
     public class GenericController : ControllerBase
     {
         //interfaces
-        private readonly IDescriptionService _descriptionService;
+        private readonly IDescriptionVideoService _descriptionService;
         private readonly IMangaService _mangaService;
 
         public GenericController(
-            IDescriptionService descriptionService,
+            IDescriptionVideoService descriptionService,
             IMangaService mangaService
             )
         {

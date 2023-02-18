@@ -14,16 +14,16 @@ namespace Cesxhin.AnimeManga.Api.Controllers
     public class GenericController : ControllerBase
     {
         //interfaces
-        private readonly IDescriptionVideoService _descriptionService;
-        private readonly IMangaService _mangaService;
+        private readonly IDescriptionVideoService _descriptionVideoService;
+        private readonly IDescriptionBookService _descriptionBookService;
 
         public GenericController(
-            IDescriptionVideoService descriptionService,
-            IMangaService mangaService
+            IDescriptionVideoService descriptionVideoService,
+            IDescriptionBookService descriptionBookService
             )
         {
-            _descriptionService = descriptionService;
-            _mangaService = mangaService;
+            _descriptionVideoService = descriptionVideoService;
+            _descriptionBookService = descriptionBookService;
         }
 
         //check test
@@ -52,8 +52,8 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 List<object> listGeneric = new();
-                var listAnime = await _descriptionService.GetNameAllAsync();
-                var listManga = await _mangaService.GetNameAllAsync();
+                var listAnime = await _descriptionVideoService.GetNameAllAsync("");
+                var listManga = await _descriptionBookService.GetNameAllAsync("");
 
                 if(listAnime != null)
                     listGeneric.AddRange(listAnime);

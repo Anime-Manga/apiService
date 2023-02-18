@@ -29,6 +29,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //env
         private readonly string _folder = Environment.GetEnvironmentVariable("BASE_PATH") ?? "/";
+        private readonly JObject _schema = JObject.Parse(Environment.GetEnvironmentVariable("SCHEMA"));
 
         public AnimeController(
             IEpisodeService episodeService,
@@ -48,16 +49,21 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetInfoAll()
+        public async Task<IActionResult> GetInfoAll(string nameCfg)
         {
             try
             {
-                var listAll = await _descriptionService.GetNameAllAsync();
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    var listAll = await _descriptionService.GetNameAllAsync(nameCfg);
 
-                if (listAll == null)
-                    return NotFound();
+                    if (listAll == null)
+                        return NotFound();
 
-                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listAll));
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listAll));
+                }
+                else
+                    return BadRequest();
             }
             catch
             {
@@ -70,16 +76,21 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetInfoByName(string name)
+        public async Task<IActionResult> GetInfoByName(string nameCfg, string name)
         {
             try
             {
-                var description = await _descriptionService.GetNameByNameAsync(name);
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    var description = await _descriptionService.GetNameByNameAsync(nameCfg, name);
 
-                if (description == null)
-                    return NotFound();
+                    if (description == null)
+                        return NotFound();
 
-                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
+                }
+                else
+                    return BadRequest();
             }
             catch
             {
@@ -92,16 +103,21 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetMostInfoByName(string name)
+        public async Task<IActionResult> GetMostInfoByName(string nameCfg, string name)
         {
             try
             {
-                var description = await _descriptionService.GetMostNameByNameAsync(name);
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    var description = await _descriptionService.GetMostNameByNameAsync(nameCfg, name);
 
-                if (description == null)
-                    return NotFound();
+                    if (description == null)
+                        return NotFound();
 
-                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
+                }
+                else
+                    return BadRequest();
             }
             catch
             {
@@ -180,17 +196,21 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PutInfo(string description)
+        public async Task<IActionResult> PutInfo(string nameCfg, string description)
         {
             try
             {
-                //insert
-                var descriptionResult = await _descriptionService.InsertNameAsync(JObject.Parse(description));
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    //insert
+                    var descriptionResult = await _descriptionService.InsertNameAsync(nameCfg, JObject.Parse(description));
 
-                if (descriptionResult == null)
-                    return Conflict();
+                    if (descriptionResult == null)
+                        return Conflict();
 
-                return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(descriptionResult));
+                    return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(descriptionResult));
+                }else
+                    return BadRequest();
             }
             catch
             {
@@ -297,18 +317,14 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 JObject cfg = null;
-                //read schema
-                try
-                {
-                    cfg = RipperSchema.readFile(downloadClass.nameCfg);
-                }
-                catch(Exception e)
-                {
-                    return NotFound();
-                }
+
+                if (!_schema.ContainsKey(downloadClass.nameCfg))
+                    return BadRequest();
+
+                cfg = _schema.GetValue(downloadClass.nameCfg).ToObject<JObject>();
 
                 //get anime and episodes
-                var description = RipperVideoGeneric.GetAnime(cfg, downloadClass.Url);
+                var description = RipperVideoGeneric.GetDescriptionVideo(cfg, downloadClass.Url);
                 var episodes = RipperVideoGeneric.GetEpisodes(cfg, downloadClass.Url, description["name_id"].ToString());
 
                 var listEpisodeRegister = new List<EpisodeRegisterDTO>();
@@ -322,7 +338,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     });
                 }
 
-                var descriptionResult = await _descriptionService.InsertNameAsync(JObject.Parse(description.ToString()));
+                var descriptionResult = await _descriptionService.InsertNameAsync(downloadClass.nameCfg, JObject.Parse(description.ToString()));
 
                 if (descriptionResult == null)
                     return Conflict();
@@ -358,8 +374,9 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                 return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(descriptionResult));
             }
-            catch
+            catch (Exception e)
             {
+                _logger.Error(e);
                 return StatusCode(500);
             }
         }
@@ -390,35 +407,39 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteInfo(string id)
+        public async Task<IActionResult> DeleteInfo(string nameCfg, string id)
         {
             try
             {
-                //insert
-                var animeResult = await _descriptionService.DeleteNameByIdAsync(id);
-
-                if (animeResult == null)
-                    return NotFound();
-                else if (animeResult == "-1")
-                    return Conflict();
-
-                //create message for notify
-                string message = $"🧮ApiService say: \nRemoved this Anime by DB and Plex: {id}\n";
-
-                try
+                if (_schema.ContainsKey(nameCfg))
                 {
-                    var messageNotify = new NotifyDTO
+                    //insert
+                    var animeResult = await _descriptionService.DeleteNameByIdAsync(nameCfg, id);
+
+                    if (animeResult == null)
+                        return NotFound();
+                    else if (animeResult == "-1")
+                        return Conflict();
+
+                    //create message for notify
+                    string message = $"🧮ApiService say: \nRemoved this Anime by DB and Plex: {id}\n";
+
+                    try
                     {
-                        Message = message
-                    };
-                    await _publishEndpoint.Publish(messageNotify);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
-                }
+                        var messageNotify = new NotifyDTO
+                        {
+                            Message = message
+                        };
+                        await _publishEndpoint.Publish(messageNotify);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                    }
 
-                return Ok(animeResult);
+                    return Ok(animeResult);
+                }else
+                    return BadRequest();
             }
             catch
             {
@@ -431,16 +452,20 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(string nameCfg)
         {
             try
             {
-                var listDescription = await _descriptionService.GetNameAllWithAllAsync();
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    var listDescription = await _descriptionService.GetNameAllWithAllAsync(nameCfg);
 
-                if (listDescription == null)
+                    if (listDescription == null)
+                        return NotFound();
+
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listDescription));
+                }else
                     return NotFound();
-
-                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listDescription));
             }
             catch
             {

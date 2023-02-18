@@ -2,6 +2,7 @@ using Cesxhin.AnimeManga.Application.CronJob;
 using Cesxhin.AnimeManga.Application.Generic;
 using Cesxhin.AnimeManga.Application.Interfaces.Repositories;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
+using Cesxhin.AnimeManga.Application.Schema;
 using Cesxhin.AnimeManga.Application.Services;
 using Cesxhin.AnimeManga.Persistence.Repositories;
 using MassTransit;
@@ -25,48 +26,7 @@ namespace Cesxhin.AnimeManga.Api
         {
             Configuration = configuration;
 
-
-            //check valid schema
-            Console.WriteLine("[STARTUP] Check schemas");
-            var schemasFile = System.IO.File.ReadAllText(".\\schemas.json");
-            var schemas = JObject.Parse(schemasFile);
-            var checkArray = new List<bool>();
-
-            foreach (var schema in schemas)
-            {
-                var selectSchema = schemas.GetValue(schema.Key).ToObject<JObject>();
-
-                checkArray.Add(selectSchema.ContainsKey("name") && selectSchema.GetValue("name").Type == JTokenType.String);
-                checkArray.Add(selectSchema.ContainsKey("type") && selectSchema.GetValue("type").Type == JTokenType.String);
-                checkArray.Add(selectSchema.ContainsKey("url_search") && selectSchema.GetValue("url_search").Type == JTokenType.String);
-                checkArray.Add(selectSchema.ContainsKey("description") && selectSchema.GetValue("description").Type == JTokenType.Object);
-                checkArray.Add(selectSchema.ContainsKey("video") && selectSchema.GetValue("video").Type == JTokenType.Object);
-
-
-                checkArray.Add(selectSchema.GetValue("description").ToObject<JObject>().ContainsKey("name_id"));
-                checkArray.Add(selectSchema.GetValue("description").ToObject<JObject>().ContainsKey("cover"));
-
-                foreach (var selectDescription in selectSchema.GetValue("description").ToObject<JObject>())
-                {
-                    var description = selectDescription.Value.ToObject<JObject>();
-
-                    checkArray.Add(description.ContainsKey("type") && description.GetValue("type").Type == JTokenType.Array);
-
-                    if(description.ContainsKey("child_nodes"))
-                        checkArray.Add(description.GetValue("child_nodes").Type == JTokenType.Integer);
-
-                    checkArray.Add(description.ContainsKey("path"));
-                }
-            }
-
-            var result = checkArray.FindAll(value => value == false);
-
-            if(result.Count > 0)
-            {
-                Console.WriteLine("[STARTUP] FATAL Wrong schemas");
-                throw new Exception();
-            }
-            Console.WriteLine("[STARTUP] Ok schemas");
+            SchemaControl.Check();
         }
 
         public IConfiguration Configuration { get; }
@@ -80,16 +40,15 @@ namespace Cesxhin.AnimeManga.Api
             services.AddSingleton<IEpisodeRegisterService, EpisodeRegisterService>();
             services.AddSingleton<IChapterRegisterService, ChapterRegisterService>();
             services.AddSingleton<IChapterService, ChapterService>();
-            services.AddSingleton<IMangaService, MangaService>();
             services.AddSingleton<IDescriptionVideoService, DescriptionVideoService>();
+            services.AddSingleton<IDescriptionBookService, DescriptionBookService>();
 
             //repositories
             services.AddSingleton<IEpisodeRepository, EpisodeRepository>();
             services.AddSingleton<IEpisodeRegisterRepository, EpisodeRegisterRepository>();
             services.AddSingleton<IChapterRegisterRepository, ChapterRegisterRepository>();
             services.AddSingleton<IChapterRepository, ChapterRepository>();
-            services.AddSingleton<IMangaRepository, MangaRepository>();
-            services.AddSingleton<IDescriptionVideoRepository, DescriptionVideoRepository>();
+            services.AddSingleton<IDescriptionRepository, DescriptionRepository>();
 
             //init repoDb
             RepoDb.PostgreSqlBootstrap.Initialize();

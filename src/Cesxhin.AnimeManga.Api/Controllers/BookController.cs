@@ -6,6 +6,7 @@ using Cesxhin.AnimeManga.Domain.DTO;
 using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -15,10 +16,10 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class MangaController : ControllerBase, IGeneralControllerBase<MangaDTO, ChapterDTO, ChapterRegisterDTO, DownloadDTO>
+    public class BookController : ControllerBase, IGeneralControllerBase<string, ChapterDTO, ChapterRegisterDTO, DownloadDTO>
     {
         //interfaces
-        private readonly IMangaService _mangaService;
+        private readonly IDescriptionBookService _bookService;
         private readonly IChapterService _chapterService;
         private readonly IChapterRegisterService _chapterRegisterService;
         private readonly IBus _publishEndpoint;
@@ -28,35 +29,41 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //env
         private readonly string _folder = Environment.GetEnvironmentVariable("BASE_PATH") ?? "/";
+        private readonly JObject _schema = JObject.Parse(Environment.GetEnvironmentVariable("SCHEMA"));
 
-        public MangaController(
-            IMangaService mangaService,
+        public BookController(
+            IDescriptionBookService bookService,
             IChapterService chapterService,
             IChapterRegisterService chapterRegisterService,
             IBus publishEndpoint
             )
         {
             _publishEndpoint = publishEndpoint;
-            _mangaService = mangaService;
+            _bookService = bookService;
             _chapterService = chapterService;
             _chapterRegisterService = chapterRegisterService;
         }
 
         //get list all manga without filter
-        [HttpGet("/manga")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<MangaDTO>))]
+        [HttpGet("/book")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetInfoAll()
+        public async Task<IActionResult> GetInfoAll(string nameCfg)
         {
             try
             {
-                var listManga = await _mangaService.GetNameAllAsync();
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    var listManga = await _bookService.GetNameAllAsync(nameCfg);
 
-                if (listManga == null)
-                    return NotFound();
+                    if (listManga == null)
+                        return NotFound();
 
-                return Ok(listManga);
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listManga));
+                }
+                else
+                    return BadRequest();
             }
             catch
             {
@@ -65,20 +72,24 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //get manga by name
-        [HttpGet("/manga/name/{name}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MangaDTO))]
+        [HttpGet("/book/name/{name}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetInfoByName(string name)
+        public async Task<IActionResult> GetInfoByName(string nameCfg, string name)
         {
             try
             {
-                var anime = await _mangaService.GetNameByNameAsync(name);
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    var anime = await _bookService.GetNameByNameAsync(nameCfg, name);
 
-                if (anime == null)
-                    return NotFound();
+                    if (anime == null)
+                        return NotFound();
 
-                return Ok(anime);
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(anime));
+                }else
+                    return BadRequest();
             }
             catch
             {
@@ -87,33 +98,38 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //get list manga by start name similar
-        [HttpGet("/manga/names/{name}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<MangaDTO>))]
+        [HttpGet("/book/names/{name}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetMostInfoByName(string name)
+        public async Task<IActionResult> GetMostInfoByName(string nameCfg, string name)
         {
             try
             {
-                var list = HtmlMangaMangaWorld.GetMangaUrl(name);
-                if (list != null)
+                if (_schema.ContainsKey(nameCfg))
                 {
-                    //list anime
-                    List<GenericUrlDTO> listManga = new();
-
-                    foreach (var manga in list)
+                    var list = RipperBookGeneric.GetMangaUrl(name);
+                    if (list != null)
                     {
-                        var mangaDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(manga);
+                        //list anime
+                        List<GenericUrlDTO> listManga = new();
 
-                        var checkManga = await _mangaService.GetNameByNameAsync(manga.Name);
-                        if (checkManga != null)
-                            mangaDTO.Exists = true;
+                        foreach (var manga in list)
+                        {
+                            var mangaDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(manga);
 
-                        listManga.Add(mangaDTO);
+                            var checkManga = await _bookService.GetNameByNameAsync(nameCfg, manga.Name);
+                            if (checkManga != null)
+                                mangaDTO.Exists = true;
+
+                            listManga.Add(mangaDTO);
+                        }
+                        return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listManga));
                     }
-                    return Ok(listManga);
+                    return NotFound();
                 }
-                return NotFound();
+                else
+                    return BadRequest();
             }
             catch
             {
@@ -122,20 +138,24 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //get all db manga
-        [HttpGet("/manga/all")]
+        [HttpGet("/book/all")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<GenericMangaDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(string nameCfg)
         {
             try
             {
-                var listManga = await _mangaService.GetNameAllWithAllAsync();
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    var listManga = await _bookService.GetNameAllWithAllAsync(nameCfg);
 
-                if (listManga == null)
-                    return NotFound();
+                    if (listManga == null)
+                        return NotFound();
 
-                return Ok(listManga);
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listManga));
+                }else
+                    return BadRequest();
             }
             catch
             {
@@ -210,7 +230,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //get list name by external db
-        [HttpGet("/manga/list/name/{name}")]
+        [HttpGet("/book/list/name/{name}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericUrlDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -218,7 +238,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         {
             try
             {
-                var mangaUrls = HtmlMangaMangaWorld.GetMangaUrl(name);
+                var mangaUrls = RipperBookGeneric.GetMangaUrl(name);
                 if (mangaUrls != null || mangaUrls.Count >= 0)
                 {
                     //list manga
@@ -246,21 +266,25 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //insert manga
-        [HttpPost("/manga")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MangaDTO))]
+        [HttpPost("/book")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PutInfo(MangaDTO infoClass)
+        public async Task<IActionResult> PutInfo(string nameCfg, string infoClass)
         {
             try
             {
-                //insert
-                var mangaResult = await _mangaService.InsertNameAsync(infoClass);
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    //insert
+                    var mangaResult = await _bookService.InsertNameAsync(nameCfg, JObject.Parse(infoClass));
 
-                if (mangaResult == null)
-                    return Conflict();
+                    if (mangaResult == null)
+                        return Conflict();
 
-                return Created("none", mangaResult);
+                    return Created("none", mangaResult);
+                }else
+                    return BadRequest();
             }
             catch
             {
@@ -359,7 +383,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
 
         //reset state download of chapterRegister into db
-        [HttpPut("/manga/redownload")]
+        [HttpPut("/book/redownload")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RedownloadObjectByUrlPage(List<ChapterDTO> objectsClass)
@@ -380,86 +404,114 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //put manga into db
-        [HttpPost("/manga/download")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MangaDTO))]
+        [HttpPost("/book/download")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO objectsClass)
+        public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO downloadClass)
         {
-            var urlPage = objectsClass.Url;
-
-            //download page
-            var html = HtmlMangaMangaWorld.GetMangaHtml(urlPage);
-
-            //get manga
-            var manga = HtmlMangaMangaWorld.GetManga(html, urlPage);
-
-            //insert manga
-            manga = await _mangaService.InsertNameAsync(manga);
-
-            if (manga == null)
-                return Conflict();
-
-            //get chapters
-            var chapters = HtmlMangaMangaWorld.GetChapters(html, urlPage, manga);
-
-            if (chapters == null)
-                return Conflict();
-
-            //insert chapters
-            var listChapters = await _chapterService.InsertObjectsAsync(chapters);
-
-            if (listChapters == null)
-                return Conflict();
-
-            var listChapterRegister = new List<ChapterRegisterDTO>();
-            List<string> chapterPaths = new();
-
-            foreach (var chapter in chapters)
-            {
-
-                for(int i=0; i<=chapter.NumberMaxImage; i++)
-                {
-                    chapterPaths.Add($"{_folder}/{chapter.NameManga}/Volume {chapter.CurrentVolume}/Chapter {chapter.CurrentChapter}/{chapter.NameManga} s{chapter.CurrentVolume}c{chapter.CurrentChapter}n{i}.png");
-                }
-
-                listChapterRegister.Add(new ChapterRegisterDTO
-                {
-                    ChapterId = chapter.ID,
-                    ChapterPath = chapterPaths.ToArray()
-                });
-
-                chapterPaths.Clear();
-            }
-
-            //insert episodesRegisters
-            var episodeRegisterResult = await _chapterRegisterService.InsertObjectsRegistersAsync(listChapterRegister);
-
-            if (episodeRegisterResult == null)
-                return Conflict();
-
-            //create message for notify
-            string message = $"🧮ApiService say: \nAdd new Manga: {manga.Name}\n";
-
             try
             {
-                var messageNotify = new NotifyDTO
-                {
-                    Message = message,
-                    Image = manga.Image
-                };
-                await _publishEndpoint.Publish(messageNotify);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
-            }
+                if (!_schema.ContainsKey(downloadClass.nameCfg))
+                    return BadRequest();
 
-            return Created("none", manga);
+                //get manga
+                var manga = RipperBookGeneric.GetDescriptionBook(_schema.GetValue(downloadClass.nameCfg).ToObject<JObject>(), downloadClass.Url);
+                string name = manga.GetValue("name_id").ToString();
+                string cover = manga.GetValue("cover").ToString();
+                //get chapters
+                var chapters = RipperBookGeneric.GetChapters(
+                    _schema.GetValue(downloadClass.nameCfg).ToObject<JObject>(),
+                    downloadClass.Url,
+                    name
+                   );
+
+                try
+                {
+                    manga.GetValue("totalVolumes").ToObject<float>();
+                    manga.GetValue("totalChapters").ToObject<float>();
+                }
+                catch
+                {
+                    float maxVolumes = 0;
+                    int maxChapters = chapters.Count;
+
+                    foreach (var chapter in chapters)
+                    {
+                        if (chapter.CurrentVolume > maxVolumes)
+                            maxVolumes = chapter.CurrentVolume;
+                    }
+
+                    manga["totalVolumes"] = maxVolumes;
+                    manga["totalChapters"] = maxChapters;
+                }
+
+                //insert manga
+                manga = await _bookService.InsertNameAsync(downloadClass.nameCfg, manga);
+
+                if (manga == null)
+                    return Conflict();
+
+                //insert chapters
+                var listChapters = await _chapterService.InsertObjectsAsync(chapters);
+
+                if (listChapters == null)
+                    return Conflict();
+
+                var listChapterRegister = new List<ChapterRegisterDTO>();
+                List<string> chapterPaths = new();
+
+                foreach (var chapter in chapters)
+                {
+
+                    for (int i = 0; i <= chapter.NumberMaxImage; i++)
+                    {
+                        chapterPaths.Add($"{_folder}/{chapter.NameManga}/Volume {chapter.CurrentVolume}/Chapter {chapter.CurrentChapter}/{chapter.NameManga} s{chapter.CurrentVolume}c{chapter.CurrentChapter}n{i}.png");
+                    }
+
+                    listChapterRegister.Add(new ChapterRegisterDTO
+                    {
+                        ChapterId = chapter.ID,
+                        ChapterPath = chapterPaths.ToArray()
+                    });
+
+                    chapterPaths.Clear();
+                }
+
+                //insert episodesRegisters
+                var episodeRegisterResult = await _chapterRegisterService.InsertObjectsRegistersAsync(listChapterRegister);
+
+                if (episodeRegisterResult == null)
+                    return Conflict();
+
+                //create message for notify
+                string message = $"🧮ApiService say: \nAdd new Manga: {name}\n";
+
+                try
+                {
+                    var messageNotify = new NotifyDTO
+                    {
+                        Message = message,
+                        Image = cover
+                    };
+                    await _publishEndpoint.Publish(messageNotify);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                }
+
+                return Created("none", manga);
+            }
+            catch(Exception e)
+            {
+                _logger.Error(e);
+                return StatusCode(500);
+            }
         }
 
         //update status chapter
-        [HttpPut("/manga/statusDownload")]
+        [HttpPut("/book/statusDownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ChapterDTO))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PutUpdateStateDownload(ChapterDTO objectClass)
@@ -480,40 +532,45 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         }
 
         //delete manga
-        [HttpDelete("/manga/{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MangaDTO))]
+        [HttpDelete("/book/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(JObject))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteInfo(string id)
+        public async Task<IActionResult> DeleteInfo(string nameCfg, string id)
         {
             try
             {
-                var manga = await _mangaService.DeleteNameByIdAsync(id);
-
-                if (manga == null)
-                    return NotFound();
-
-                if (manga == "-1")
-                    return Conflict();
-
-                //create message for notify
-                string message = $"🧮ApiService say: \nRemoved this Manga by DB: {id}\n";
-
-                try
+                if (_schema.ContainsKey(nameCfg))
                 {
-                    var messageNotify = new NotifyDTO
+                    var manga = await _bookService.DeleteNameByIdAsync(nameCfg, id);
+
+                    if (manga == null)
+                        return NotFound();
+
+                    if (manga == "-1")
+                        return Conflict();
+
+                    //create message for notify
+                    string message = $"🧮ApiService say: \nRemoved this Manga by DB: {id}\n";
+
+                    try
                     {
-                        Message = message
-                    };
-                    await _publishEndpoint.Publish(messageNotify);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
-                }
+                        var messageNotify = new NotifyDTO
+                        {
+                            Message = message
+                        };
+                        await _publishEndpoint.Publish(messageNotify);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                    }
 
-                return Ok(manga);
+                    return Ok(manga);
+                }
+                else
+                    return BadRequest();
             }
             catch
             {

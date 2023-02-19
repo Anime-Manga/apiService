@@ -414,11 +414,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (_schema.ContainsKey(nameCfg))
                 {
                     //insert
-                    var animeResult = await _descriptionService.DeleteNameByIdAsync(nameCfg, id);
+                    var videoResult = await _descriptionService.DeleteNameByIdAsync(nameCfg, id);
 
-                    if (animeResult == null)
+                    if (videoResult == null)
                         return NotFound();
-                    else if (animeResult == "-1")
+                    else if (videoResult == "-1")
                         return Conflict();
 
                     //create message for notify
@@ -437,7 +437,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                         _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
                     }
 
-                    return Ok(animeResult);
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(videoResult));
                 }else
                     return BadRequest();
             }
@@ -463,7 +463,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     if (listDescription == null)
                         return NotFound();
 
-                    return Ok(listDescription);
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listDescription));
                 }else
                     return NotFound();
             }

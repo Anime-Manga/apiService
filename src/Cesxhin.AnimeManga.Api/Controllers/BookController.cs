@@ -259,7 +259,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                             list.Add(bookUrlDTO);
                         }
-                        return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(list));
+                        return Ok(list);
                     }
                     return NotFound();
                 }
@@ -289,7 +289,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     if (mangaResult == null)
                         return Conflict();
 
-                    return Created("none", mangaResult);
+                    return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(mangaResult));
                 }else
                     return BadRequest();
             }
@@ -456,9 +456,9 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 }
 
                 //insert manga
-                manga = await _bookService.InsertNameAsync(downloadClass.nameCfg, manga);
+                var resultDescription = await _bookService.InsertNameAsync(downloadClass.nameCfg, manga);
 
-                if (manga == null)
+                if (resultDescription == null)
                     return Conflict();
 
                 //insert chapters
@@ -510,7 +510,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
                 }
 
-                return Created("none", manga);
+                return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(resultDescription));
             }
             catch(Exception e)
             {
@@ -542,7 +542,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //delete manga
         [HttpDelete("/book/{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(JObject))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -552,12 +552,12 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 if (_schema.ContainsKey(nameCfg))
                 {
-                    var manga = await _bookService.DeleteNameByIdAsync(nameCfg, id);
+                    var book = await _bookService.DeleteNameByIdAsync(nameCfg, id);
 
-                    if (manga == null)
+                    if (book == null)
                         return NotFound();
 
-                    if (manga == "-1")
+                    if (book == "-1")
                         return Conflict();
 
                     //create message for notify
@@ -576,7 +576,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                         _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
                     }
 
-                    return Ok(manga);
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(book));
                 }
                 else
                     return BadRequest();

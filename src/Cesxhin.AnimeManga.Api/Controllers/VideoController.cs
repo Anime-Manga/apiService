@@ -463,7 +463,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     if (listDescription == null)
                         return NotFound();
 
-                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listDescription));
+                    return Ok(listDescription);
                 }else
                     return NotFound();
             }
@@ -478,30 +478,38 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericUrlDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetListSearchByName(string name)
+        public async Task<IActionResult> GetListSearchByName(string nameCfg, string name)
         {
             try
             {
-                var descriptionUrls = RipperVideoGeneric.GetAnimeUrl(name);
-                if (descriptionUrls != null || descriptionUrls.Count >= 0)
+                if (_schema.ContainsKey(nameCfg))
                 {
-                    //list anime
-                    List<GenericUrlDTO> list = new();
-
-                    foreach (var descrptionUrl in descriptionUrls)
+                    var searchSchema = _schema.GetValue(nameCfg).ToObject<JObject>().GetValue("search").ToObject<JObject>();
+                    var descriptionUrls = RipperVideoGeneric.GetVideoUrl(searchSchema, name);
+                    if (descriptionUrls != null || descriptionUrls.Count >= 0)
                     {
-                        var descriptionUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(descrptionUrl);
+                        //list anime
+                        List<GenericUrlDTO> list = new();
 
-                        //check if already exists
-                        var description = await _episodeService.GetObjectsByNameAsync(descriptionUrlDTO.Name);
-                        if (description != null)
-                            descriptionUrlDTO.Exists = true;
+                        foreach (var descrptionUrl in descriptionUrls)
+                        {
+                            var descriptionUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(descrptionUrl);
 
-                        list.Add(descriptionUrlDTO);
+                            //check if already exists
+                            var description = await _episodeService.GetObjectsByNameAsync(descriptionUrlDTO.Name);
+                            if (description != null)
+                                descriptionUrlDTO.Exists = true;
+
+                            list.Add(descriptionUrlDTO);
+                        }
+                        return Ok(list);
                     }
-                    return Ok(list);
+                    return NotFound();
                 }
-                return NotFound();
+                else
+                {
+                    return BadRequest();
+                } 
             }
             catch
             {

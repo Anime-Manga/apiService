@@ -108,21 +108,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 if (_schema.ContainsKey(nameCfg))
                 {
-                    var list = RipperBookGeneric.GetMangaUrl(name);
-                    if (list != null)
+                    var searchSchema = _schema.GetValue(nameCfg).ToObject<JObject>().GetValue("search").ToObject<JObject>();
+                    var bookUrls = RipperBookGeneric.GetBookUrl(searchSchema, name);
+                    if (bookUrls != null && bookUrls.Count > 0)
                     {
                         //list anime
                         List<GenericUrlDTO> listManga = new();
 
-                        foreach (var manga in list)
+                        foreach (var book in bookUrls)
                         {
-                            var mangaDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(manga);
+                            var bookDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(book);
 
-                            var checkManga = await _bookService.GetNameByNameAsync(nameCfg, manga.Name);
+                            var checkManga = await _bookService.GetNameByNameAsync(nameCfg, book.Name);
                             if (checkManga != null)
-                                mangaDTO.Exists = true;
+                                bookDTO.Exists = true;
 
-                            listManga.Add(mangaDTO);
+                            listManga.Add(bookDTO);
                         }
                         return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listManga));
                     }
@@ -146,14 +147,14 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         {
             try
             {
-                if (_schema.ContainsKey(nameCfg))
+                if (nameCfg != null && _schema.ContainsKey(nameCfg))
                 {
                     var listManga = await _bookService.GetNameAllWithAllAsync(nameCfg);
 
                     if (listManga == null)
                         return NotFound();
 
-                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listManga));
+                    return Ok(listManga);
                 }else
                     return BadRequest();
             }
@@ -234,30 +235,36 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericUrlDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetListSearchByName(string name)
+        public async Task<IActionResult> GetListSearchByName(string nameCfg, string name)
         {
             try
             {
-                var mangaUrls = RipperBookGeneric.GetMangaUrl(name);
-                if (mangaUrls != null || mangaUrls.Count >= 0)
+                if (_schema.ContainsKey(nameCfg))
                 {
-                    //list manga
-                    List<GenericUrlDTO> list = new();
-
-                    foreach (var mangaUrl in mangaUrls)
+                    var searchSchema = _schema.GetValue(nameCfg).ToObject<JObject>().GetValue("search").ToObject<JObject>();
+                    var bookUrls = RipperBookGeneric.GetBookUrl(searchSchema, name);
+                    if (bookUrls != null && bookUrls.Count >= 0)
                     {
-                        var mangaUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(mangaUrl);
+                        //list manga
+                        List<GenericUrlDTO> list = new();
 
-                        //check if already exists
-                        var manga = await _chapterService.GetObjectsByNameAsync(mangaUrlDTO.Name);
-                        if (manga != null)
-                            mangaUrlDTO.Exists = true;
+                        foreach (var bookUrl in bookUrls)
+                        {
+                            var bookUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(bookUrl);
 
-                        list.Add(mangaUrlDTO);
+                            //check if already exists
+                            var book = await _chapterService.GetObjectsByNameAsync(bookUrlDTO.Name);
+                            if (book != null)
+                                bookUrlDTO.Exists = true;
+
+                            list.Add(bookUrlDTO);
+                        }
+                        return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(list));
                     }
-                    return Ok(list);
+                    return NotFound();
                 }
-                return NotFound();
+                else
+                    return BadRequest();
             }
             catch
             {
@@ -419,11 +426,13 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 var manga = RipperBookGeneric.GetDescriptionBook(_schema.GetValue(downloadClass.nameCfg).ToObject<JObject>(), downloadClass.Url);
                 string name = manga.GetValue("name_id").ToString();
                 string cover = manga.GetValue("cover").ToString();
+
                 //get chapters
                 var chapters = RipperBookGeneric.GetChapters(
                     _schema.GetValue(downloadClass.nameCfg).ToObject<JObject>(),
                     downloadClass.Url,
-                    name
+                    name,
+                    downloadClass.nameCfg
                    );
 
                 try

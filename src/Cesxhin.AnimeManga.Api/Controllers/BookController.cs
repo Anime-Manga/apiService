@@ -140,7 +140,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //get all db manga
         [HttpGet("/book/all")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<GenericMangaDTO>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<GenericBookDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll(string nameCfg)

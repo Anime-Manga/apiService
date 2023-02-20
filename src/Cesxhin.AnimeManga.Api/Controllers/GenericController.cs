@@ -44,7 +44,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //get all db
         [HttpGet("/all")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Tuple<JObject, GenericMangaDTO>>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Tuple<JObject, GenericBookDTO>>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()

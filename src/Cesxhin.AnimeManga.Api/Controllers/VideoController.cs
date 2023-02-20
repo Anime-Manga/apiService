@@ -449,7 +449,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //get all db anime
         [HttpGet("/video/all")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<GenericVideoDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll(string nameCfg)
@@ -463,7 +463,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     if (listDescription == null)
                         return NotFound();
 
-                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listDescription));
+                    return Ok(listDescription);
                 }else
                     return NotFound();
             }

@@ -73,7 +73,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //get anime by name
         [HttpGet("/video/name/{name}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericVideoDTO))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetInfoByName(string nameCfg, string name)
@@ -87,7 +87,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     if (description == null)
                         return NotFound();
 
-                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
+                    return Ok(description);
                 }
                 else
                     return BadRequest();
@@ -325,7 +325,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                 //get anime and episodes
                 var description = RipperVideoGeneric.GetDescriptionVideo(cfg, downloadClass.Url);
-                var episodes = RipperVideoGeneric.GetEpisodes(cfg, downloadClass.Url, description["name_id"].ToString());
+                var episodes = RipperVideoGeneric.GetEpisodes(cfg, downloadClass.Url, description["name_id"].ToString(), downloadClass.nameCfg);
 
                 var listEpisodeRegister = new List<EpisodeRegisterDTO>();
 

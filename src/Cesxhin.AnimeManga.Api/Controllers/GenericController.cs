@@ -17,6 +17,9 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         private readonly IDescriptionVideoService _descriptionVideoService;
         private readonly IDescriptionBookService _descriptionBookService;
 
+        //env
+        private readonly JObject schemas = JObject.Parse(Environment.GetEnvironmentVariable("SCHEMA"));
+
         public GenericController(
             IDescriptionVideoService descriptionVideoService,
             IDescriptionBookService descriptionBookService
@@ -24,6 +27,21 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         {
             _descriptionVideoService = descriptionVideoService;
             _descriptionBookService = descriptionBookService;
+        }
+        //check test
+        [HttpGet("/cfg")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> getSchema()
+        {
+            try
+            {
+                return Ok(Environment.GetEnvironmentVariable("SCHEMA"));
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
         }
 
         //check test
@@ -44,27 +62,34 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //get all db
         [HttpGet("/all")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Tuple<JObject, GenericBookDTO>>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
         {
+            List<dynamic> listGeneric = new();
+            dynamic result;
             try
             {
-                List<object> listGeneric = new();
-                var listAnime = await _descriptionVideoService.GetNameAllAsync("");
-                var listManga = await _descriptionBookService.GetNameAllAsync("");
+                foreach (var item in schemas)
+                {
+                    var schema = schemas.GetValue(item.Key).ToObject<JObject>();
+                    if (schema.GetValue("type").ToString() == "video")
+                    {
+                        result = await _descriptionVideoService.GetNameAllAsync(item.Key);
+                    }else
+                    {
+                        result = await _descriptionBookService.GetNameAllAsync(item.Key);
+                    }
 
-                if(listAnime != null)
-                    listGeneric.AddRange(listAnime);
-
-                if(listManga != null)
-                    listGeneric.AddRange(listManga);
+                    if (result != null)
+                        listGeneric.Add(result);
+                }
 
                 if (listGeneric.Count <= 0)
                     return NotFound();
 
-                return Ok(listGeneric);
+                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listGeneric));
             }
             catch
             {

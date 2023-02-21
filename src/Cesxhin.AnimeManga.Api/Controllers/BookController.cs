@@ -423,7 +423,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     return BadRequest();
 
                 //get manga
-                var manga = RipperBookGeneric.GetDescriptionBook(_schema.GetValue(downloadClass.nameCfg).ToObject<JObject>(), downloadClass.Url);
+                var manga = RipperBookGeneric.GetDescriptionBook(_schema.GetValue(downloadClass.nameCfg).ToObject<JObject>(), downloadClass.Url, downloadClass.nameCfg);
                 string name = manga.GetValue("name_id").ToString();
                 string cover = manga.GetValue("cover").ToString();
 

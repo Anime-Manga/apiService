@@ -324,7 +324,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 cfg = _schema.GetValue(downloadClass.nameCfg).ToObject<JObject>();
 
                 //get anime and episodes
-                var description = RipperVideoGeneric.GetDescriptionVideo(cfg, downloadClass.Url);
+                var description = RipperVideoGeneric.GetDescriptionVideo(cfg, downloadClass.Url, downloadClass.nameCfg);
                 var episodes = RipperVideoGeneric.GetEpisodes(cfg, downloadClass.Url, description["name_id"].ToString(), downloadClass.nameCfg);
 
                 var listEpisodeRegister = new List<EpisodeRegisterDTO>();

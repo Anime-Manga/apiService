@@ -391,18 +391,16 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //reset state download of chapterRegister into db
         [HttpPut("/book/redownload")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ChapterDTO>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RedownloadObjectByUrlPage(List<ChapterDTO> objectsClass)
+        public async Task<IActionResult> RedownloadObjectByUrlPage(string name)
         {
             try
             {
-                foreach (var chapter in objectsClass)
-                {
-                    chapter.StateDownload = null;
-                    await _chapterService.ResetStatusDownloadObjectByIdAsync(chapter);
-                }
-                return Ok();
+                var result = await _chapterService.ResetStatusMultipleDownloadObjectByIdAsync(name);
+                if (result == null)
+                    return NotFound();
+                return Ok(result);
             }
             catch
             {

@@ -1,4 +1,5 @@
 ﻿using Cesxhin.AnimeManga.Application.Interfaces.Services;
+using Cesxhin.AnimeManga.Application.Parallel;
 using Cesxhin.AnimeManga.Domain.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -83,8 +84,57 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     }
 
                     if (result != null)
-                        listGeneric.Add(result);
+                        listGeneric.AddRange(result);
                 }
+
+                if (listGeneric.Count <= 0)
+                    return NotFound();
+
+                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listGeneric));
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
+
+        //get all db
+        [HttpGet("/search")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetSearch(string name)
+        {
+            List<dynamic> listGeneric = new();
+            ParallelManager<IEnumerable<JObject>> parallel = new();
+            List<Func<IEnumerable<JObject>>> tasks = new();
+            dynamic result;
+            try
+            {
+                foreach (var item in schemas)
+                {
+                    var schema = schemas.GetValue(item.Key).ToObject<JObject>();
+                    if (schema.GetValue("type").ToString() == "video")
+                    {
+                        var key = item.Key;
+                        tasks.Add(new Func<IEnumerable<JObject>>(() => _descriptionVideoService.GetNameAllAsync(key).GetAwaiter().GetResult()));
+                    }
+                    else
+                    {
+                        var key = item.Key;
+                        tasks.Add(new Func<IEnumerable<JObject>>(() => _descriptionBookService.GetNameAllAsync(key).GetAwaiter().GetResult()));
+                    }
+
+                }
+
+                parallel.AddTasks(tasks);
+                parallel.Start();
+                parallel.WhenCompleted();
+
+                result = parallel.GetResult();
+
+                foreach (var item in result)
+                    listGeneric.AddRange(item);
 
                 if (listGeneric.Count <= 0)
                     return NotFound();

@@ -73,10 +73,10 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //get anime by name
         [HttpGet("/video/name/{name}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericVideoDTO))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetInfoByName(string nameCfg, string name)
+        public async Task<IActionResult> GetInfoByName(string name, string nameCfg)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     if (description == null)
                         return NotFound();
 
-                    return Ok(description);
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
                 }
                 else
                     return BadRequest();
@@ -383,18 +383,17 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
         //reset state download of episodeRegister into db
         [HttpPut("/video/redownload")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<EpisodeDTO>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RedownloadObjectByUrlPage(List<EpisodeDTO> objectsClass)
+        public async Task<IActionResult> RedownloadObjectByUrlPage(string name)
         {
             try
             {
-                foreach (var episode in objectsClass)
-                {
-                    episode.StateDownload = null;
-                    await _episodeService.ResetStatusDownloadObjectByIdAsync(episode);
-                }
-                return Ok();
+                var rs = await _episodeService.ResetStatusMultipleDownloadObjectByIdAsync(name);
+                if (rs == null)
+                    return NotFound();
+
+                return Ok(rs);
             }
             catch
             {

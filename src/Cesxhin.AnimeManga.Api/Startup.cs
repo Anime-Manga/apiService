@@ -42,6 +42,7 @@ namespace Cesxhin.AnimeManga.Api
             services.AddSingleton<IChapterService, ChapterService>();
             services.AddSingleton<IDescriptionVideoService, DescriptionVideoService>();
             services.AddSingleton<IDescriptionBookService, DescriptionBookService>();
+            services.AddSingleton<IAccountService, AccountService>();
 
             //repositories
             services.AddSingleton<IEpisodeRepository, EpisodeRepository>();
@@ -49,6 +50,7 @@ namespace Cesxhin.AnimeManga.Api
             services.AddSingleton<IChapterRegisterRepository, ChapterRegisterRepository>();
             services.AddSingleton<IChapterRepository, ChapterRepository>();
             services.AddSingleton<IDescriptionRepository, DescriptionRepository>();
+            services.AddSingleton<IAccountRepository, AccountRepository>();
 
             //init repoDb
             RepoDb.PostgreSqlBootstrap.Initialize();

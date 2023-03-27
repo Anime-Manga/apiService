@@ -60,13 +60,12 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 return StatusCode(500);
             }
         }
-
-        //get all db
-        [HttpGet("/all")]
+        //get all db only saved by account
+        [HttpGet("/all/watchlist")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllOnlyWatchList(string username)
         {
             List<dynamic> listGeneric = new();
             dynamic result;
@@ -77,10 +76,48 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     var schema = schemas.GetValue(item.Key).ToObject<JObject>();
                     if (schema.GetValue("type").ToString() == "video")
                     {
-                        result = await _descriptionVideoService.GetNameAllAsync(item.Key);
+                        result = await _descriptionVideoService.GetNameAllOnlyWatchListAsync(item.Key, username);
+                    }
+                    else
+                    {
+                        result = await _descriptionBookService.GetNameAllOnlyWatchListAsync(item.Key, username);
+                    }
+
+                    if (result != null)
+                        listGeneric.AddRange(result);
+                }
+
+                if (listGeneric.Count <= 0)
+                    return NotFound();
+
+                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listGeneric));
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
+
+        //get all db
+        [HttpGet("/all")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAll(string username)
+        {
+            List<dynamic> listGeneric = new();
+            dynamic result;
+            try
+            {
+                foreach (var item in schemas)
+                {
+                    var schema = schemas.GetValue(item.Key).ToObject<JObject>();
+                    if (schema.GetValue("type").ToString() == "video")
+                    {
+                        result = await _descriptionVideoService.GetNameAllAsync(item.Key, username);
                     }else
                     {
-                        result = await _descriptionBookService.GetNameAllAsync(item.Key);
+                        result = await _descriptionBookService.GetNameAllAsync(item.Key, username);
                     }
 
                     if (result != null)
@@ -103,7 +140,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetSearch(string name)
+        public async Task<IActionResult> GetSearch(string username)
         {
             List<dynamic> listGeneric = new();
             ParallelManager<IEnumerable<JObject>> parallel = new();
@@ -117,12 +154,12 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     if (schema.GetValue("type").ToString() == "video")
                     {
                         var key = item.Key;
-                        tasks.Add(new Func<IEnumerable<JObject>>(() => _descriptionVideoService.GetNameAllAsync(key).GetAwaiter().GetResult()));
+                        tasks.Add(new Func<IEnumerable<JObject>>(() => _descriptionVideoService.GetNameAllAsync(key, username).GetAwaiter().GetResult()));
                     }
                     else
                     {
                         var key = item.Key;
-                        tasks.Add(new Func<IEnumerable<JObject>>(() => _descriptionBookService.GetNameAllAsync(key).GetAwaiter().GetResult()));
+                        tasks.Add(new Func<IEnumerable<JObject>>(() => _descriptionBookService.GetNameAllAsync(key, username).GetAwaiter().GetResult()));
                     }
 
                 }

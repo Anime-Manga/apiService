@@ -49,13 +49,13 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetInfoAll(string nameCfg)
+        public async Task<IActionResult> GetInfoAll(string nameCfg, string username)
         {
             try
             {
                 if (_schema.ContainsKey(nameCfg))
                 {
-                    var listManga = await _bookService.GetNameAllAsync(nameCfg);
+                    var listManga = await _bookService.GetNameAllAsync(nameCfg, username);
 
                     if (listManga == null)
                         return NotFound();
@@ -76,13 +76,13 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetInfoByName(string nameCfg, string name)
+        public async Task<IActionResult> GetInfoByName(string nameCfg, string name, string username)
         {
             try
             {
                 if (_schema.ContainsKey(nameCfg))
                 {
-                    var anime = await _bookService.GetNameByNameAsync(nameCfg, name);
+                    var anime = await _bookService.GetNameByNameAsync(nameCfg, name, username);
 
                     if (anime == null)
                         return NotFound();
@@ -102,7 +102,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetMostInfoByName(string nameCfg, string name)
+        public async Task<IActionResult> GetMostInfoByName(string nameCfg, string name, string username)
         {
             try
             {
@@ -119,7 +119,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                         {
                             var bookDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(book);
 
-                            var checkManga = await _bookService.GetNameByNameAsync(nameCfg, book.Name);
+                            var checkManga = await _bookService.GetNameByNameAsync(nameCfg, book.Name, username);
                             if (checkManga != null)
                                 bookDTO.Exists = true;
 
@@ -143,13 +143,13 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<GenericBookDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll(string nameCfg)
+        public async Task<IActionResult> GetAll(string nameCfg, string username)
         {
             try
             {
                 if (nameCfg != null && _schema.ContainsKey(nameCfg))
                 {
-                    var listManga = await _bookService.GetNameAllWithAllAsync(nameCfg);
+                    var listManga = await _bookService.GetNameAllWithAllAsync(nameCfg, username);
 
                     if (listManga == null)
                         return NotFound();

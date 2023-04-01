@@ -16,12 +16,13 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class BookController : ControllerBase, IGeneralControllerBase<string, ChapterDTO, ChapterRegisterDTO, DownloadDTO>
+    public class BookController : ControllerBase, IGeneralControllerBase<string, ChapterDTO, ChapterRegisterDTO, DownloadDTO, ProgressChapterDTO>
     {
         //interfaces
         private readonly IDescriptionBookService _bookService;
         private readonly IChapterService _chapterService;
         private readonly IChapterRegisterService _chapterRegisterService;
+        private readonly IProgressChapterService _progressChapterService;
         private readonly IBus _publishEndpoint;
 
         //log
@@ -35,6 +36,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             IDescriptionBookService bookService,
             IChapterService chapterService,
             IChapterRegisterService chapterRegisterService,
+            IProgressChapterService progressChapterService,
             IBus publishEndpoint
             )
         {
@@ -42,6 +44,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             _bookService = bookService;
             _chapterService = chapterService;
             _chapterRegisterService = chapterRegisterService;
+            _progressChapterService = progressChapterService;
         }
 
         //get list all manga without filter
@@ -578,6 +581,48 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 }
                 else
                     return BadRequest();
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
+
+        //put progress for tracker
+        [HttpPut("/chapter/progress")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProgressChapterDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PutStateProgress(ProgressChapterDTO progress)
+        {
+            try
+            {
+                var result = await _progressChapterService.UpdateProgress(progress);
+                if (result == null)
+                    return NotFound();
+
+                return Ok(result);
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
+
+        //put progress for tracker
+        [HttpGet("/chapter/progress")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProgressChapterDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetStateProgress(string name, string username, string nameCfg)
+        {
+            try
+            {
+                var result = await _progressChapterService.GetProgressByName(name, username, nameCfg);
+                if (result == null)
+                    return NotFound();
+
+                return Ok(result);
             }
             catch
             {

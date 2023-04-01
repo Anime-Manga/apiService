@@ -16,12 +16,13 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class AnimeController : ControllerBase, IGeneralControllerBase<string, EpisodeDTO, EpisodeRegisterDTO, DownloadDTO>
+    public class AnimeController : ControllerBase, IGeneralControllerBase<string, EpisodeDTO, EpisodeRegisterDTO, DownloadDTO, ProgressEpisodeDTO>
     {
         //interfaces
         private readonly IDescriptionVideoService _descriptionService;
         private readonly IEpisodeService _episodeService;
         private readonly IEpisodeRegisterService _episodeRegisterService;
+        private readonly IProgressEpisodeService _progressEpisodeService;
         private readonly IBus _publishEndpoint;
 
         //log
@@ -35,6 +36,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             IEpisodeService episodeService,
             IEpisodeRegisterService episodeRegisterService,
             IDescriptionVideoService descriptionService,
+            IProgressEpisodeService progressEpisodeService,
             IBus publishEndpoint
             )
         {
@@ -42,6 +44,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             _episodeService = episodeService;
             _episodeRegisterService = episodeRegisterService;
             _publishEndpoint = publishEndpoint;
+            _progressEpisodeService = progressEpisodeService;
         }
 
         //get list all anime without filter
@@ -530,6 +533,48 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     return NotFound();
 
                 return Ok(resultEpisode);
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
+
+        //put progress for tracker
+        [HttpPut("/episode/progress")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProgressEpisodeDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PutStateProgress(ProgressEpisodeDTO progress)
+        {
+            try
+            {
+                var result = await _progressEpisodeService.UpdateProgress(progress);
+                if (result == null)
+                    return NotFound();
+
+                return Ok(result);
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
+
+        //put progress for tracker
+        [HttpGet("/episode/progress")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProgressEpisodeDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetStateProgress(string name, string username, string nameCfg)
+        {
+            try
+            {
+                var result = await _progressEpisodeService.GetProgressByName(name, username, nameCfg);
+                if (result == null)
+                    return NotFound();
+
+                return Ok(result);
             }
             catch
             {

@@ -12,11 +12,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Newtonsoft.Json.Linq;
 using NLog;
 using Quartz;
 using System;
-using System.Collections.Generic;
 
 namespace Cesxhin.AnimeManga.Api
 {
@@ -43,6 +41,8 @@ namespace Cesxhin.AnimeManga.Api
             services.AddSingleton<IDescriptionVideoService, DescriptionVideoService>();
             services.AddSingleton<IDescriptionBookService, DescriptionBookService>();
             services.AddSingleton<IAccountService, AccountService>();
+            services.AddSingleton<IProgressEpisodeService, ProgressEpisodeService>();
+            services.AddSingleton<IProgressChapterService, ProgressChapterService>();
 
             //repositories
             services.AddSingleton<IEpisodeRepository, EpisodeRepository>();
@@ -51,6 +51,8 @@ namespace Cesxhin.AnimeManga.Api
             services.AddSingleton<IChapterRepository, ChapterRepository>();
             services.AddSingleton<IDescriptionRepository, DescriptionRepository>();
             services.AddSingleton<IAccountRepository, AccountRepository>();
+            services.AddSingleton<IProgressEpisodeRepository, ProgressEpisodeRepository>();
+            services.AddSingleton<IProgressChapterRepository, ProgressChapterRepository>();
 
             //init repoDb
             RepoDb.PostgreSqlBootstrap.Initialize();

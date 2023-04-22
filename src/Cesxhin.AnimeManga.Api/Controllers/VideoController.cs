@@ -435,7 +435,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //reset state download of episodeRegister into db
         [HttpPut("/video/redownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<EpisodeDTO>))]
-        [ProducesResponseType(StatusCodes. Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RedownloadObjectByUrlPage(string name)
         {
@@ -571,7 +571,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                             await _descriptionService.GetNameByNameAsync(nameCfg, descriptionUrlDTO.Name, null);
                             descriptionUrlDTO.Exists = true;
                         }
-                        catch (ApiNotFoundException){}
+                        catch (ApiNotFoundException) { }
 
                         list.Add(descriptionUrlDTO);
                     }

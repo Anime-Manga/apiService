@@ -126,7 +126,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                         {
                             result = await _descriptionVideoService.GetNameAllAsync(item.Key, username);
                         }
-                        catch (ApiNotFoundException){}
+                        catch (ApiNotFoundException) { }
                     }
                     else
                     {
@@ -137,11 +137,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                         catch (ApiNotFoundException) { }
                     }
 
-                    if(result != null)
+                    if (result != null)
                         listGeneric.AddRange(result);
                 }
 
-                if(listGeneric.Count > 0)
+                if (listGeneric.Count > 0)
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listGeneric));
                 else
                     throw new ApiNotFoundException();

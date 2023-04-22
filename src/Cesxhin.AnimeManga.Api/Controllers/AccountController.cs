@@ -33,7 +33,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 var user = await _accountService.Login(auth.Username, auth.Password);
                 return Ok(user);
             }
-            catch(ApiNotAuthorizeException)
+            catch (ApiNotAuthorizeException)
             {
                 return Unauthorized();
             }

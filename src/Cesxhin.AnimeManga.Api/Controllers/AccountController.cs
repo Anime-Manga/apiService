@@ -1,7 +1,9 @@
-﻿using Cesxhin.AnimeManga.Application.Interfaces.Services;
+﻿using Cesxhin.AnimeManga.Application.Exceptions;
+using Cesxhin.AnimeManga.Application.Interfaces.Services;
 using Cesxhin.AnimeManga.Domain.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace Cesxhin.AnimeManga.Api.Controllers
@@ -29,14 +31,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     return BadRequest();
 
                 var user = await _accountService.Login(auth.Username, auth.Password);
-                if (user != null)
-                    return Ok(user);
-
+                return Ok(user);
+            }
+            catch(ApiNotAuthorizeException)
+            {
                 return Unauthorized();
             }
-            catch
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -53,14 +60,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     return BadRequest();
 
                 var user = await _accountService.CreateAccount(auth.Username, auth.Password);
-                if (user != null)
-                    return Ok(user);
-
+                return Ok(user);
+            }
+            catch (ApiConflictException)
+            {
                 return Conflict();
             }
-            catch
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -74,14 +86,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var rs = await _accountService.InsertWatchList(whiteListDTO);
-                if (rs != null)
-                    return Ok(rs);
-
+                return Ok(rs);
+            }
+            catch (ApiConflictException)
+            {
                 return Conflict();
             }
-            catch
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -100,9 +117,17 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                 return Conflict();
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
     }

@@ -1,4 +1,5 @@
-﻿using Cesxhin.AnimeManga.Application.Interfaces.Services;
+﻿using Cesxhin.AnimeManga.Application.Exceptions;
+using Cesxhin.AnimeManga.Application.Interfaces.Services;
 using Cesxhin.AnimeManga.Application.Parallel;
 using Cesxhin.AnimeManga.Domain.DTO;
 using Microsoft.AspNetCore.Http;
@@ -87,14 +88,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                         listGeneric.AddRange(result);
                 }
 
-                if (listGeneric.Count <= 0)
-                    return NotFound();
-
                 return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listGeneric));
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -112,26 +118,45 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 foreach (var item in schemas)
                 {
                     var schema = schemas.GetValue(item.Key).ToObject<JObject>();
+                    result = null;
+
                     if (schema.GetValue("type").ToString() == "video")
                     {
-                        result = await _descriptionVideoService.GetNameAllAsync(item.Key, username);
-                    }else
+                        try
+                        {
+                            result = await _descriptionVideoService.GetNameAllAsync(item.Key, username);
+                        }
+                        catch (ApiNotFoundException){}
+                    }
+                    else
                     {
-                        result = await _descriptionBookService.GetNameAllAsync(item.Key, username);
+                        try
+                        {
+                            result = await _descriptionBookService.GetNameAllAsync(item.Key, username);
+                        }
+                        catch (ApiNotFoundException) { }
                     }
 
-                    if (result != null)
+                    if(result != null)
                         listGeneric.AddRange(result);
                 }
 
-                if (listGeneric.Count <= 0)
-                    return NotFound();
-
-                return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listGeneric));
+                if(listGeneric.Count > 0)
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listGeneric));
+                else
+                    throw new ApiNotFoundException();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -173,14 +198,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 foreach (var item in result)
                     listGeneric.AddRange(item);
 
-                if (listGeneric.Count <= 0)
-                    return NotFound();
-
                 return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listGeneric));
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 

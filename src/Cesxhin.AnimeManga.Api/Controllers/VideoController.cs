@@ -1,16 +1,17 @@
-﻿using Cesxhin.AnimeManga.Application.Interfaces.Controllers;
+﻿using Cesxhin.AnimeManga.Application.Exceptions;
+using Cesxhin.AnimeManga.Application.HtmlAgilityPack;
+using Cesxhin.AnimeManga.Application.Interfaces.Controllers;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
 using Cesxhin.AnimeManga.Application.NlogManager;
 using Cesxhin.AnimeManga.Domain.DTO;
 using MassTransit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using NLog;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Cesxhin.AnimeManga.Application.HtmlAgilityPack;
 
 namespace Cesxhin.AnimeManga.Api.Controllers
 {
@@ -59,18 +60,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (_schema.ContainsKey(nameCfg))
                 {
                     var listAll = await _descriptionService.GetNameAllAsync(nameCfg, username);
-
-                    if (listAll == null)
-                        return NotFound();
-
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listAll));
                 }
                 else
                     return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -86,18 +91,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (_schema.ContainsKey(nameCfg))
                 {
                     var description = await _descriptionService.GetNameByNameAsync(nameCfg, name, username);
-
-                    if (description == null)
-                        return NotFound();
-
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
                 }
                 else
                     return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -113,18 +122,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (_schema.ContainsKey(nameCfg))
                 {
                     var description = await _descriptionService.GetMostNameByNameAsync(nameCfg, name, username);
-
-                    if (description == null)
-                        return NotFound();
-
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(description));
                 }
                 else
                     return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -138,15 +151,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var listEpisodes = await _episodeService.GetObjectsByNameAsync(name);
-
-                if (listEpisodes == null)
-                    return NotFound();
-
                 return Ok(listEpisodes);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -160,15 +177,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var episode = await _episodeService.GetObjectByIDAsync(id);
-
-                if (episode == null)
-                    return NotFound();
-
                 return Ok(episode);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -182,15 +203,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var episodeRegister = await _episodeRegisterService.GetObjectRegisterByObjectId(id);
-
-                if (episodeRegister == null)
-                    return NotFound();
-
                 return Ok(episodeRegister);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -207,17 +232,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 {
                     //insert
                     var descriptionResult = await _descriptionService.InsertNameAsync(nameCfg, JObject.Parse(description));
-
-                    if (descriptionResult == null)
-                        return Conflict();
-
                     return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(descriptionResult));
-                }else
+                }
+                else
                     return BadRequest();
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -232,15 +262,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 //insert
                 var episodeResult = await _episodeService.InsertObjectAsync(objectClass);
-
-                if (episodeResult == null)
-                    return Conflict();
-
                 return Created("none", episodeResult);
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -255,15 +289,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 //insert
                 var episodeResult = await _episodeService.InsertObjectsAsync(objectsClass);
-
-                if (episodeResult == null)
-                    return Conflict();
-
                 return Created("none", episodeResult);
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -278,41 +316,52 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 //insert
                 var episodeResult = await _episodeRegisterService.InsertObjectsRegistersAsync(objectsRegistersClass);
-
-                if (episodeResult == null)
-                    return Conflict();
-
                 return Created("none", episodeResult);
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //put episodeRegister into db
         [HttpPut("/episode/register")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(EpisodeRegisterDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateObjectRegister(EpisodeRegisterDTO objectRegisterClass)
         {
             try
             {
                 var rs = await _episodeRegisterService.UpdateObjectRegisterAsync(objectRegisterClass);
-                if (rs == null)
-                    return NotFound();
-
                 return Ok(rs);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //put anime into db
         [HttpPost("/video/download")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO downloadClass)
@@ -343,20 +392,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                 var descriptionResult = await _descriptionService.InsertNameAsync(downloadClass.nameCfg, JObject.Parse(description.ToString()));
 
-                if (descriptionResult == null)
-                    return Conflict();
-
                 //insert episodes
                 var episodeResult = await _episodeService.InsertObjectsAsync(episodes);
 
-                if (episodeResult == null)
-                    return Conflict();
-
                 //insert episodesRegisters
                 var episodeRegisterResult = await _episodeRegisterService.InsertObjectsRegistersAsync(listEpisodeRegister);
-
-                if (episodeResult == null)
-                    return Conflict();
 
                 //create message for notify
                 string message = $"🧮ApiService say: \nAdd new Anime: {description["name_id"]}\n";
@@ -377,6 +417,14 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                 return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(descriptionResult));
             }
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
             catch (Exception e)
             {
                 _logger.Error(e);
@@ -387,18 +435,24 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //reset state download of episodeRegister into db
         [HttpPut("/video/redownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<EpisodeDTO>))]
+        [ProducesResponseType(StatusCodes. Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RedownloadObjectByUrlPage(string name)
         {
             try
             {
                 var rs = await _episodeService.ResetStatusMultipleDownloadObjectByIdAsync(name);
-                if (rs == null)
-                    return NotFound();
-
                 return Ok(rs);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception)
             {
                 return StatusCode(500);
             }
@@ -408,6 +462,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [HttpDelete("/video/{id}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteInfo(string nameCfg, string id)
         {
@@ -418,13 +473,8 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     //insert
                     var videoResult = await _descriptionService.DeleteNameByIdAsync(nameCfg, id);
 
-                    if (videoResult == null)
-                        return NotFound();
-                    else if (videoResult == "-1")
-                        return Conflict();
-
                     //create message for notify
-                    string message = $"🧮ApiService say: \nRemoved this Anime by DB and Plex: {id}\n";
+                    string message = $"🧮ApiService say: \nRemoved this Anime by DB: {id}\n";
 
                     try
                     {
@@ -440,10 +490,23 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     }
 
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(videoResult));
-                }else
+                }
+                else
                     return BadRequest();
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception)
             {
                 return StatusCode(500);
             }
@@ -453,6 +516,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [HttpGet("/video/all")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<GenericVideoDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll(string nameCfg, string username)
         {
@@ -461,15 +525,20 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (_schema.ContainsKey(nameCfg))
                 {
                     var listDescription = await _descriptionService.GetNameAllWithAllAsync(nameCfg, username);
-
-                    if (listDescription == null)
-                        return NotFound();
-
                     return Ok(listDescription);
-                }else
-                    return NotFound();
+                }
+                else
+                    return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception)
             {
                 return StatusCode(500);
             }
@@ -488,32 +557,38 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 {
                     var searchSchema = _schema.GetValue(nameCfg).ToObject<JObject>().GetValue("search").ToObject<JObject>();
                     var descriptionUrls = RipperVideoGeneric.GetVideoUrl(searchSchema, name);
-                    if (descriptionUrls != null || descriptionUrls.Count >= 0)
+
+                    //list anime
+                    List<GenericUrlDTO> list = new();
+
+                    foreach (var descrptionUrl in descriptionUrls)
                     {
-                        //list anime
-                        List<GenericUrlDTO> list = new();
+                        var descriptionUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(descrptionUrl);
 
-                        foreach (var descrptionUrl in descriptionUrls)
+                        //check if already exists
+                        try
                         {
-                            var descriptionUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(descrptionUrl);
-
-                            //check if already exists
-                            var description = await _episodeService.GetObjectsByNameAsync(descriptionUrlDTO.Name);
-                            if (description != null)
-                                descriptionUrlDTO.Exists = true;
-
-                            list.Add(descriptionUrlDTO);
+                            await _descriptionService.GetNameByNameAsync(nameCfg, descriptionUrlDTO.Name, null);
+                            descriptionUrlDTO.Exists = true;
                         }
-                        return Ok(list);
+                        catch (ApiNotFoundException){}
+
+                        list.Add(descriptionUrlDTO);
                     }
-                    return NotFound();
+                    return Ok(list);
                 }
                 else
-                {
                     return BadRequest();
-                } 
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception)
             {
                 return StatusCode(500);
             }
@@ -522,6 +597,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //update status episode
         [HttpPut("/video/statusDownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(EpisodeDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PutUpdateStateDownload(EpisodeDTO objectClass)
         {
@@ -529,12 +605,17 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 //update
                 var resultEpisode = await _episodeService.UpdateStateDownloadAsync(objectClass);
-                if (resultEpisode == null)
-                    return NotFound();
-
                 return Ok(resultEpisode);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception)
             {
                 return StatusCode(500);
             }
@@ -550,12 +631,17 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var result = await _progressEpisodeService.UpdateProgress(progress);
-                if (result == null)
-                    return NotFound();
-
                 return Ok(result);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception)
             {
                 return StatusCode(500);
             }
@@ -571,12 +657,17 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var result = await _progressEpisodeService.GetProgressByName(name, username, nameCfg);
-                if (result == null)
-                    return NotFound();
-
                 return Ok(result);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception)
             {
                 return StatusCode(500);
             }

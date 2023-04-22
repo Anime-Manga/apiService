@@ -1,4 +1,5 @@
-﻿using Cesxhin.AnimeManga.Application.HtmlAgilityPack;
+﻿using Cesxhin.AnimeManga.Application.Exceptions;
+using Cesxhin.AnimeManga.Application.HtmlAgilityPack;
 using Cesxhin.AnimeManga.Application.Interfaces.Controllers;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
 using Cesxhin.AnimeManga.Application.NlogManager;
@@ -50,6 +51,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //get list all manga without filter
         [HttpGet("/book")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetInfoAll(string nameCfg, string username)
@@ -59,24 +61,29 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (_schema.ContainsKey(nameCfg))
                 {
                     var listManga = await _bookService.GetNameAllAsync(nameCfg, username);
-
-                    if (listManga == null)
-                        return NotFound();
-
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listManga));
                 }
                 else
                     return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //get manga by name
         [HttpGet("/book/name/{name}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetInfoByName(string nameCfg, string name, string username)
@@ -86,23 +93,29 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (_schema.ContainsKey(nameCfg))
                 {
                     var anime = await _bookService.GetNameByNameAsync(nameCfg, name, username);
-
-                    if (anime == null)
-                        return NotFound();
-
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(anime));
-                }else
+                }
+                else
                     return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //get list manga by start name similar
         [HttpGet("/book/names/{name}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<string>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetMostInfoByName(string nameCfg, string name, string username)
@@ -113,37 +126,43 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 {
                     var searchSchema = _schema.GetValue(nameCfg).ToObject<JObject>().GetValue("search").ToObject<JObject>();
                     var bookUrls = RipperBookGeneric.GetBookUrl(searchSchema, name);
-                    if (bookUrls != null && bookUrls.Count > 0)
+
+                    //list anime
+                    List<GenericUrlDTO> listManga = new();
+
+                    foreach (var book in bookUrls)
                     {
-                        //list anime
-                        List<GenericUrlDTO> listManga = new();
+                        var bookDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(book);
 
-                        foreach (var book in bookUrls)
-                        {
-                            var bookDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(book);
+                        var checkManga = await _bookService.GetNameByNameAsync(nameCfg, book.Name, username);
+                        if (checkManga != null)
+                            bookDTO.Exists = true;
 
-                            var checkManga = await _bookService.GetNameByNameAsync(nameCfg, book.Name, username);
-                            if (checkManga != null)
-                                bookDTO.Exists = true;
-
-                            listManga.Add(bookDTO);
-                        }
-                        return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listManga));
+                        listManga.Add(bookDTO);
                     }
-                    return NotFound();
+                    return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(listManga));
                 }
                 else
                     return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //get all db manga
         [HttpGet("/book/all")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<GenericBookDTO>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll(string nameCfg, string username)
@@ -153,17 +172,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (nameCfg != null && _schema.ContainsKey(nameCfg))
                 {
                     var listManga = await _bookService.GetNameAllWithAllAsync(nameCfg, username);
-
-                    if (listManga == null)
-                        return NotFound();
-
                     return Ok(listManga);
-                }else
+                }
+                else
                     return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -177,15 +201,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var listChapters = await _chapterService.GetObjectsByNameAsync(name);
-
-                if (listChapters == null)
-                    return NotFound();
-
                 return Ok(listChapters);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -199,15 +227,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var chapter = await _chapterService.GetObjectByIDAsync(id);
-
-                if (chapter == null)
-                    return NotFound();
-
                 return Ok(chapter);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -221,21 +253,26 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var chapterRegister = await _chapterRegisterService.GetObjectRegisterByObjectId(id);
-
-                if (chapterRegister == null)
-                    return NotFound();
-
                 return Ok(chapterRegister);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //get list name by external db
         [HttpGet("/book/list/name/{name}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericUrlDTO>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetListSearchByName(string nameCfg, string name)
@@ -246,38 +283,47 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 {
                     var searchSchema = _schema.GetValue(nameCfg).ToObject<JObject>().GetValue("search").ToObject<JObject>();
                     var bookUrls = RipperBookGeneric.GetBookUrl(searchSchema, name);
-                    if (bookUrls != null && bookUrls.Count >= 0)
+
+                    //list manga
+                    List<GenericUrlDTO> list = new();
+
+                    foreach (var bookUrl in bookUrls)
                     {
-                        //list manga
-                        List<GenericUrlDTO> list = new();
+                        var bookUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(bookUrl);
 
-                        foreach (var bookUrl in bookUrls)
+                        //check if already exists
+                        try
                         {
-                            var bookUrlDTO = GenericUrlDTO.GenericUrlToGenericUrlDTO(bookUrl);
-
-                            //check if already exists
-                            var book = await _chapterService.GetObjectsByNameAsync(bookUrlDTO.Name);
-                            if (book != null)
-                                bookUrlDTO.Exists = true;
-
-                            list.Add(bookUrlDTO);
+                            await _chapterService.GetObjectsByNameAsync(bookUrlDTO.Name);
+                            bookUrlDTO.Exists = true;
                         }
-                        return Ok(list);
+                        catch (ApiNotFoundException) { }
+
+                        list.Add(bookUrlDTO);
                     }
-                    return NotFound();
+                    return Ok(list);
                 }
                 else
                     return BadRequest();
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //insert manga
         [HttpPost("/book")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PutInfo(string nameCfg, string infoClass)
@@ -288,17 +334,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 {
                     //insert
                     var mangaResult = await _bookService.InsertNameAsync(nameCfg, JObject.Parse(infoClass));
-
-                    if (mangaResult == null)
-                        return Conflict();
-
                     return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(mangaResult));
-                }else
+                }
+                else
                     return BadRequest();
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -313,15 +364,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 //insert
                 var chapterResult = await _chapterService.InsertObjectAsync(objectClass);
-
-                if (chapterResult == null)
-                    return Conflict();
-
                 return Created("none", chapterResult);
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -336,15 +391,19 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 //insert
                 var chaptersResult = await _chapterService.InsertObjectsAsync(objectsClass);
-
-                if (chaptersResult == null)
-                    return Conflict();
-
                 return Created("none", chaptersResult);
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -359,35 +418,45 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 //insert
                 var chapterResult = await _chapterRegisterService.InsertObjectsRegistersAsync(objectsRegistersClass);
-
-                if (chapterResult == null)
-                    return Conflict();
-
                 return Created("none", chapterResult);
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //put chapterRegister into db
         [HttpPut("/chapter/register")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ChapterRegisterDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateObjectRegister(ChapterRegisterDTO objectRegisterClass)
         {
             try
             {
                 var chapterRegisterResult = await _chapterRegisterService.UpdateObjectRegisterAsync(objectRegisterClass);
-                if (chapterRegisterResult == null)
-                    return NotFound();
-
                 return Ok(chapterRegisterResult);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -395,25 +464,33 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //reset state download of chapterRegister into db
         [HttpPut("/book/redownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ChapterDTO>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RedownloadObjectByUrlPage(string name)
         {
             try
             {
                 var result = await _chapterService.ResetStatusMultipleDownloadObjectByIdAsync(name);
-                if (result == null)
-                    return NotFound();
                 return Ok(result);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
             }
         }
 
         //put manga into db
         [HttpPost("/book/download")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO downloadClass)
@@ -459,14 +536,8 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 //insert manga
                 var resultDescription = await _bookService.InsertNameAsync(downloadClass.nameCfg, manga);
 
-                if (resultDescription == null)
-                    return Conflict();
-
                 //insert chapters
                 var listChapters = await _chapterService.InsertObjectsAsync(chapters);
-
-                if (listChapters == null)
-                    return Conflict();
 
                 var listChapterRegister = new List<ChapterRegisterDTO>();
                 List<string> chapterPaths = new();
@@ -491,9 +562,6 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 //insert episodesRegisters
                 var episodeRegisterResult = await _chapterRegisterService.InsertObjectsRegistersAsync(listChapterRegister);
 
-                if (episodeRegisterResult == null)
-                    return Conflict();
-
                 //create message for notify
                 string message = $"🧮ApiService say: \nAdd new Manga: {name}\n";
 
@@ -513,16 +581,25 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                 return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(resultDescription));
             }
-            catch(Exception e)
+            catch (ApiConflictException)
             {
-                _logger.Error(e);
+                return Conflict();
+            }
+            catch (ApiGenericException)
+            {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
         //update status chapter
         [HttpPut("/book/statusDownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ChapterDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PutUpdateStateDownload(ChapterDTO objectClass)
         {
@@ -530,14 +607,20 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 //update
                 var chapterResult = await _chapterService.UpdateStateDownloadAsync(objectClass);
-                if (chapterResult == null)
-                    return NotFound();
-
                 return Ok(chapterResult);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -554,12 +637,6 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 if (_schema.ContainsKey(nameCfg))
                 {
                     var book = await _bookService.DeleteNameByIdAsync(nameCfg, id);
-
-                    if (book == null)
-                        return NotFound();
-
-                    if (book == "-1")
-                        return Conflict();
 
                     //create message for notify
                     string message = $"🧮ApiService say: \nRemoved this Manga by DB: {id}\n";
@@ -582,9 +659,22 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 else
                     return BadRequest();
             }
-            catch
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -598,18 +688,24 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var result = await _progressChapterService.UpdateProgress(progress);
-                if (result == null)
-                    return NotFound();
-
                 return Ok(result);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
             }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
         }
 
-        //put progress for tracker
+        //get progress for tracker
         [HttpGet("/chapter/progress")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProgressChapterDTO))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -619,14 +715,20 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var result = await _progressChapterService.GetProgressByName(name, username, nameCfg);
-                if (result == null)
-                    return NotFound();
-
                 return Ok(result);
             }
-            catch
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
     }

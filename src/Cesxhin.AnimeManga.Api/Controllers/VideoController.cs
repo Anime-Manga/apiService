@@ -251,6 +251,41 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             }
         }
 
+        //update anime
+        [HttpPut("/video")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateInfo([FromBody] string content)
+        {
+            try
+            {
+                var description = JObject.Parse(content);
+                string nameCfg = (string)description["nameCfg"];
+
+                if (_schema.ContainsKey(nameCfg))
+                {
+                    //update
+                    var descriptionResult = await _descriptionService.UpdateNameAsync(nameCfg, description);
+                    return Created("none", Newtonsoft.Json.JsonConvert.SerializeObject(descriptionResult));
+                }
+                else
+                    return BadRequest();
+            }
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         //insert episode
         [HttpPost("/episode")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(EpisodeDTO))]

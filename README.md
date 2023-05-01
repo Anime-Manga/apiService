@@ -1,5 +1,5 @@
 ## 🧮Api Service
-Questo progetto verrà utilizzato per esporre i dati in maniera facile e veloce con il database postgresql.
+Questo progetto verrà utilizzato per esporre i dati in maniera facile e veloce con il database postgresql e mongo.
 
 ### Expose Ports:
 - 80 tcp
@@ -11,6 +11,8 @@ Questo progetto verrà utilizzato per esporre i dati in maniera facile e veloce 
 example:
     #--- DB ---
     DATABASE_CONNECTION: User ID=guest;Password=guest;Host=localhost;Port=33333;Database=db; [require]
+    DATABASE_CONNECTION_MONGO: "mongodb://ip:port"
+    NAME_DATABASE_MONGO: "name db"
     
     #--- Rabbit ---
     USERNAME_RABBIT: "guest" #guest [default]

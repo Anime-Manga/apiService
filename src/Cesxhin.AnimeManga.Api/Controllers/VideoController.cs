@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Cesxhin.AnimeManga.Api.Controllers
@@ -505,7 +506,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 if (_schema.ContainsKey(nameCfg))
                 {
-                    //insert
+                    var listEpisodeService = await _episodeService.GetObjectsByNameAsync(id);
+                    var listEpisodeRegister = await _episodeRegisterService.GetObjectsRegistersByListObjectId(listEpisodeService.ToList());
+                    var videoDescription = await _descriptionService.GetNameByNameAsync(nameCfg, id, null);
+
+                    //delete
                     var videoResult = await _descriptionService.DeleteNameByIdAsync(nameCfg, id);
 
                     //create message for notify
@@ -515,13 +520,26 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     {
                         var messageNotify = new NotifyDTO
                         {
-                            Message = message
+                            Message = message,
+                            Image = videoDescription.GetValue("cover").ToString()
                         };
                         await _publishEndpoint.Publish(messageNotify);
                     }
                     catch (Exception ex)
                     {
                         _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                    }
+
+                    foreach (var episode in listEpisodeRegister)
+                    {
+                        try
+                        {
+                            await _publishEndpoint.Publish(episode);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                        }
                     }
 
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(videoResult));

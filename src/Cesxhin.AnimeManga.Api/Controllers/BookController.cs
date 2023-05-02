@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Cesxhin.AnimeManga.Api.Controllers
@@ -672,6 +673,10 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 if (_schema.ContainsKey(nameCfg))
                 {
+                    var listChapterService = await _chapterService.GetObjectsByNameAsync(id);
+                    var listChapterRegister = await _chapterRegisterService.GetObjectsRegistersByListObjectId(listChapterService.ToList());
+                    var bookDescription = await _bookService.GetNameByNameAsync(nameCfg, id, null);
+
                     var book = await _bookService.DeleteNameByIdAsync(nameCfg, id);
 
                     //create message for notify
@@ -681,13 +686,27 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     {
                         var messageNotify = new NotifyDTO
                         {
-                            Message = message
+                            Message = message,
+                            Image = bookDescription.GetValue("cover").ToString()
                         };
+
                         await _publishEndpoint.Publish(messageNotify);
                     }
                     catch (Exception ex)
                     {
                         _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                    }
+
+                    foreach (var chapterRegister in listChapterRegister)
+                    {
+                        try
+                        {
+                            await _publishEndpoint.Publish(chapterRegister);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                        }
                     }
 
                     return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(book));

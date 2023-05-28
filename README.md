@@ -1,11 +1,21 @@
 ## 🧮Api Service
 Questo progetto verrà utilizzato per esporre i dati in maniera facile e veloce con il database postgresql e mongo.
 
-### Expose Ports:
-- 80 tcp
+| Expose ports | Protocol |
+| ------ | ------ |
+| 80 | TCP |
 
 ### Information general:
-- `not` require volume mounted on Docker
+> Note: `not` require volume mounted on Docker
+
+### Dependencies
+| Services | Required |
+| ------ | ------ |
+| Mongo | ✅  |
+| Postgresql | ✅  |
+| RabbitMQ | ✅  |
+| Notify | ⛔ |
+
 ### Variabili globali richiesti:
 ```sh
 example:

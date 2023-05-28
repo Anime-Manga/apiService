@@ -2,6 +2,7 @@ using Cesxhin.AnimeManga.Application.CronJob;
 using Cesxhin.AnimeManga.Application.Generic;
 using Cesxhin.AnimeManga.Application.Interfaces.Repositories;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
+using Cesxhin.AnimeManga.Application.Schema;
 using Cesxhin.AnimeManga.Application.Services;
 using Cesxhin.AnimeManga.Persistence.Repositories;
 using MassTransit;
@@ -22,6 +23,8 @@ namespace Cesxhin.AnimeManga.Api
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+            SchemaControl.Check();
         }
 
         public IConfiguration Configuration { get; }
@@ -31,20 +34,25 @@ namespace Cesxhin.AnimeManga.Api
         {
             //interfaces
             //services
-            services.AddSingleton<IAnimeService, AnimeService>();
             services.AddSingleton<IEpisodeService, EpisodeService>();
             services.AddSingleton<IEpisodeRegisterService, EpisodeRegisterService>();
             services.AddSingleton<IChapterRegisterService, ChapterRegisterService>();
             services.AddSingleton<IChapterService, ChapterService>();
-            services.AddSingleton<IMangaService, MangaService>();
+            services.AddSingleton<IDescriptionVideoService, DescriptionVideoService>();
+            services.AddSingleton<IDescriptionBookService, DescriptionBookService>();
+            services.AddSingleton<IAccountService, AccountService>();
+            services.AddSingleton<IProgressEpisodeService, ProgressEpisodeService>();
+            services.AddSingleton<IProgressChapterService, ProgressChapterService>();
 
             //repositories
-            services.AddSingleton<IAnimeRepository, AnimeRepository>();
             services.AddSingleton<IEpisodeRepository, EpisodeRepository>();
             services.AddSingleton<IEpisodeRegisterRepository, EpisodeRegisterRepository>();
             services.AddSingleton<IChapterRegisterRepository, ChapterRegisterRepository>();
             services.AddSingleton<IChapterRepository, ChapterRepository>();
-            services.AddSingleton<IMangaRepository, MangaRepository>();
+            services.AddSingleton<IDescriptionRepository, DescriptionRepository>();
+            services.AddSingleton<IAccountRepository, AccountRepository>();
+            services.AddSingleton<IProgressEpisodeRepository, ProgressEpisodeRepository>();
+            services.AddSingleton<IProgressChapterRepository, ProgressChapterRepository>();
 
             //init repoDb
             RepoDb.PostgreSqlBootstrap.Initialize();
@@ -84,7 +92,7 @@ namespace Cesxhin.AnimeManga.Api
             });
 
             //setup nlog
-            var level = Environment.GetEnvironmentVariable("LOG_LEVEL").ToLower() ?? "info";
+            var level = Environment.GetEnvironmentVariable("LOG_LEVEL")?.ToLower() ?? "info";
             LogLevel logLevel = NLogManager.GetLevel(level);
             NLogManager.Configure(logLevel);
 

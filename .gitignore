@@ -399,7 +399,9 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-src/references
 *.sln
 Properties
 # End of https://www.toptal.com/developers/gitignore/api/csharp
+
+schemas.json
+Cesxhin.AnimeManga.Api.csproj

@@ -1,6 +1,6 @@
-﻿using Cesxhin.AnimeManga.Application.Exceptions;
+﻿using Cesxhin.AnimeManga.Modules.Exceptions;
 using Cesxhin.AnimeManga.Application.Interfaces.Repositories;
-using Cesxhin.AnimeManga.Application.NlogManager;
+using Cesxhin.AnimeManga.Modules.NlogManager;
 using Cesxhin.AnimeManga.Domain.Models;
 using NLog;
 using Npgsql;
@@ -130,14 +130,14 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
             }
         }
 
-        public async Task<bool> WhiteListCheckByName(string name)
+        public async Task<bool> WhiteListCheckByName(string name, string username)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
                 IEnumerable<WatchList> rs;
                 try
                 {
-                    rs = await connection.QueryAsync<WatchList>(e => e.Name == name);
+                    rs = await connection.QueryAsync<WatchList>(e => e.Name == name && e.Username == username);
                 }
                 catch (Exception ex)
                 {

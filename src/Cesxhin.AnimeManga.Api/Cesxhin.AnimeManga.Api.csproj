@@ -20,9 +20,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\references\Cesxhin.AnimeManga.Application\Cesxhin.AnimeManga.Application.csproj" />
-    <ProjectReference Include="..\references\Cesxhin.AnimeManga.Domain\Cesxhin.AnimeManga.Domain.csproj" />
-    <ProjectReference Include="..\references\Cesxhin.AnimeManga.Persistence\Cesxhin.AnimeManga.Persistence.csproj" />
+	<ProjectReference Include="..\Cesxhin.AnimeManga.Persistence\Cesxhin.AnimeManga.Persistence.csproj" />
+    <ProjectReference Include="..\Cesxhin.AnimeManga.Application\Cesxhin.AnimeManga.Application.csproj" />
+    <ProjectReference Include="..\..\..\references\src\Cesxhin.AnimeManga.Modules\Cesxhin.AnimeManga.Modules.csproj" />
+    <ProjectReference Include="..\..\..\references\src\Cesxhin.AnimeManga.Domain\Cesxhin.AnimeManga.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="schemas.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties properties_4launchsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>

@@ -1,0 +1,28 @@
+{
+  "*": {
+    "name": "string",
+    "type": "string",
+    "search": {
+      "url_search": "string",
+      "page": "boolean",
+      "prefixSearch": "string",
+
+      "collection": "*",
+
+      "description": {
+        "imageUrl": "*",
+        "urlPage": "*",
+        "name": "*"
+      }
+    },
+    "description": {
+      "*": "*"
+    },
+    "video": {
+      "collection": "*",
+      "procedure": {
+        "*":"*"
+      }
+    }
+  }
+}

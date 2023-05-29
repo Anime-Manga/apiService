@@ -1,4 +1,4 @@
-﻿using Cesxhin.AnimeManga.Application.Exceptions;
+﻿using Cesxhin.AnimeManga.Modules.Exceptions;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
 using Cesxhin.AnimeManga.Domain.DTO;
 using Microsoft.AspNetCore.Http;

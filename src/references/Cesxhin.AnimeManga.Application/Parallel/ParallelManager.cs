@@ -1,4 +1,4 @@
-﻿using Cesxhin.AnimeManga.Application.NlogManager;
+﻿using Cesxhin.AnimeManga.Modules.NlogManager;
 using NLog;
 using System;
 using System.Collections.Generic;

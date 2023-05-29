@@ -1,6 +1,6 @@
-﻿using Cesxhin.AnimeManga.Application.Exceptions;
+﻿using Cesxhin.AnimeManga.Modules.Exceptions;
 using Cesxhin.AnimeManga.Application.Generic;
-using Cesxhin.AnimeManga.Application.NlogManager;
+using Cesxhin.AnimeManga.Modules.NlogManager;
 using Cesxhin.AnimeManga.Domain.DTO;
 using NLog;
 using Quartz;

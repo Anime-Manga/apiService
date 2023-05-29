@@ -1,8 +1,8 @@
-using Cesxhin.AnimeManga.Application.CronJob;
-using Cesxhin.AnimeManga.Application.Generic;
+using Cesxhin.AnimeManga.Modules.CronJob;
+using Cesxhin.AnimeManga.Modules.Generic;
 using Cesxhin.AnimeManga.Application.Interfaces.Repositories;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
-using Cesxhin.AnimeManga.Application.Schema;
+using Cesxhin.AnimeManga.Modules.Schema;
 using Cesxhin.AnimeManga.Application.Services;
 using Cesxhin.AnimeManga.Persistence.Repositories;
 using MassTransit;

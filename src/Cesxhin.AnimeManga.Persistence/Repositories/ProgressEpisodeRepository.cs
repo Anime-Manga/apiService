@@ -1,6 +1,6 @@
-﻿using Cesxhin.AnimeManga.Application.Exceptions;
+﻿using Cesxhin.AnimeManga.Modules.Exceptions;
 using Cesxhin.AnimeManga.Application.Interfaces.Repositories;
-using Cesxhin.AnimeManga.Application.NlogManager;
+using Cesxhin.AnimeManga.Modules.NlogManager;
 using Cesxhin.AnimeManga.Domain.Models;
 using NLog;
 using Npgsql;

@@ -1,7 +1,6 @@
-﻿using Cesxhin.AnimeManga.Application.Exceptions;
-using Cesxhin.AnimeManga.Application.Generic;
+﻿using Cesxhin.AnimeManga.Modules.Exceptions;
 using Cesxhin.AnimeManga.Application.Interfaces.Repositories;
-using Cesxhin.AnimeManga.Application.NlogManager;
+using Cesxhin.AnimeManga.Modules.NlogManager;
 using Cesxhin.AnimeManga.Domain.Models;
 using NLog;
 using Npgsql;
@@ -14,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Cesxhin.AnimeManga.Persistence.Repositories
 {
-    public class ChapterRepository : IChapterRepository
+    public class EpisodeRepository : IEpisodeRepository
     {
         //log
         private readonly NLogConsole _logger = new(LogManager.GetCurrentClassLogger());
@@ -27,13 +26,14 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
             using (var connection = new NpgsqlConnection(_connectionString))
             {
                 int rs = 0;
+
                 try
                 {
-                    rs = await connection.DeleteAsync<Chapter>(e => e.NameManga == id);
+                    rs = await connection.DeleteAsync<Episode>(e => e.VideoId == id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed GetChapterByIDAsync, details error: {ex.Message}");
+                    _logger.Error($"Failed DeleteByNameAsync, details error: {ex.Message}");
                     throw new ApiGenericException(ex.Message);
                 }
 
@@ -44,56 +44,59 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
             }
         }
 
-        public async Task<Chapter> GetObjectByIDAsync(string id)
+        //get episode by id
+        public async Task<Episode> GetObjectByIDAsync(string id)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
-                IEnumerable<Chapter> rs;
+                IEnumerable<Episode> rs;
 
                 try
                 {
-                    rs = await connection.QueryAsync<Chapter>(e => e.ID == id);
+                    rs = await connection.QueryAsync<Episode>(e => e.ID == id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed GetChapterByIDAsync, details error: {ex.Message}");
+                    _logger.Error($"Failed GetObjectByIDAsync, details error: {ex.Message}");
                     throw new ApiGenericException(ex.Message);
                 }
 
                 if (rs != null && rs.Any())
                     return rs.First();
                 else
-                    throw new ApiNotFoundException("Not found GetObjectsByIDAsync");
+                    throw new ApiNotFoundException("Not found GetObjectByIDAsync");
             }
         }
 
-        public async Task<IEnumerable<Chapter>> GetObjectsByNameAsync(string nameManga)
+        //get episodes by name
+        public async Task<IEnumerable<Episode>> GetObjectsByNameAsync(string name)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
-                IEnumerable<Chapter> rs;
+                IEnumerable<Episode> rs;
 
                 try
                 {
-                    rs = await connection.QueryAsync<Chapter>(e => e.NameManga == nameManga, orderBy: OrderField.Parse(new
+                    rs = await connection.QueryAsync<Episode>(e => e.VideoId == name, orderBy: OrderField.Parse(new
                     {
-                        currentchapter = Order.Ascending
+                        numberepisodecurrent = Order.Ascending
                     }));
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed GetChaptersByNameAsync, details error: {ex.Message}");
+                    _logger.Error($"Failed GetObjectsByNameAsync, details error: {ex.Message}");
                     throw new ApiGenericException(ex.Message);
                 }
 
                 if (rs != null && rs.Any())
-                    return ConvertGeneric<Chapter>.ConvertIEnurableToListCollection(rs);
+                    return rs;
                 else
                     throw new ApiNotFoundException("Not found GetObjectsByNameAsync");
             }
         }
 
-        public async Task<Chapter> InsertObjectAsync(Chapter chapter)
+        //insert episode
+        public async Task<Episode> InsertObjectAsync(Episode episode)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
@@ -101,7 +104,7 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
 
                 try
                 {
-                    rs = await connection.InsertAsync(chapter);
+                    rs = await connection.InsertAsync(episode);
                 }
                 catch (Exception ex)
                 {
@@ -110,13 +113,13 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
                 }
 
                 if (rs != null && !string.IsNullOrEmpty(rs.ToString()))
-                    return chapter;
+                    return episode;
                 else
                     throw new ApiNotFoundException("Not found InsertObjectAsync");
             }
         }
 
-        public async Task<IEnumerable<Chapter>> InsertObjectsAsync(List<Chapter> chapters)
+        public async Task<IEnumerable<Episode>> InsertObjectsAsync(List<Episode> episodes)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
@@ -124,84 +127,90 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
 
                 try
                 {
-                    rs = await connection.InsertAllAsync(chapters);
+                    rs = await connection.InsertAllAsync(episodes);
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed InsertChapterAsync, details error: {ex.Message}");
+                    _logger.Error($"Failed InsertObjectsAsync, details error: {ex.Message}");
                     throw new ApiGenericException(ex.Message);
                 }
 
                 if (rs > 0)
-                    return chapters;
+                    return episodes;
                 else
                     throw new ApiNotFoundException("Not found InsertObjectsAsync");
             }
         }
 
-        public async Task<Chapter> ResetStatusDownloadObjectByIdAsync(Chapter chapter)
+        //reset StatusDownlod to null
+        public async Task<Episode> ResetStatusDownloadObjectByIdAsync(Episode episode)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
                 int rs = 0;
 
-                chapter.PercentualDownload = 0;
-                chapter.StateDownload = null;
+                episode.PercentualDownload = 0;
+                episode.StateDownload = null;
 
                 try
                 {
-                    rs = await connection.UpdateAsync(chapter, e => e.StateDownload != "completed" && e.ID == chapter.ID);
+
+                    rs = await connection.UpdateAsync(episode, e => e.StateDownload != "completed" && e.ID == episode.ID);
+
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed ResetStatusDownloadChaptersByIdAsync, details error: {ex.Message}");
+                    _logger.Error($"Failed ResetStatusDownloadObjectByIdAsync, details error: {ex.Message}");
                     throw new ApiGenericException(ex.Message);
                 }
 
                 if (rs > 0)
-                    return chapter;
+                    return episode;
                 else
                     throw new ApiNotFoundException("Not found ResetStatusDownloadObjectByIdAsync");
             }
         }
 
-        public async Task<IEnumerable<Chapter>> ResetStatusDownloadObjectsByIdAsync(List<Chapter> chapters)
+        public async Task<IEnumerable<Episode>> ResetStatusDownloadObjectsByIdAsync(List<Episode> episodes)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
                 int rs = 0;
+
                 try
                 {
-                    var chaptersUpdate = chapters.Where(e => e.StateDownload != "completed").ToList();
-                    chaptersUpdate.ForEach(e =>
+                    var episodesUpdate = episodes.Where(e => e.StateDownload != "completed").ToList();
+                    episodesUpdate.ForEach((e) =>
                     {
                         e.PercentualDownload = 0;
                         e.StateDownload = null;
                     });
 
-                    rs = await connection.UpdateAllAsync(chaptersUpdate);
+                    rs = await connection.UpdateAllAsync(episodesUpdate);
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed ResetStatusDownloadChaptersByIdAsync, details error: {ex.Message}");
+                    _logger.Error($"Failed ResetStatusDownloadObjectsByIdAsync, details error: {ex.Message}");
                     throw new ApiGenericException(ex.Message);
                 }
 
                 if (rs > 0)
-                    return chapters;
+                    return episodes;
                 else
                     throw new ApiNotFoundException("Not found ResetStatusDownloadObjectsByIdAsync");
             }
         }
 
-        public async Task<Chapter> UpdateStateDownloadAsync(Chapter chapter)
+        //update percentualDownload
+        public async Task<Episode> UpdateStateDownloadAsync(Episode episode)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
                 int rs = 0;
+
                 try
                 {
-                    rs = await connection.UpdateAsync(chapter);
+                    rs = await connection.UpdateAsync(episode);
                 }
                 catch (Exception ex)
                 {
@@ -210,7 +219,7 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
                 }
 
                 if (rs > 0)
-                    return chapter;
+                    return episode;
                 else
                     throw new ApiNotFoundException("Not found UpdateStateDownloadAsync");
             }

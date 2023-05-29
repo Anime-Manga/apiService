@@ -1,4 +1,4 @@
-﻿using Cesxhin.AnimeManga.Application.Exceptions;
+﻿using Cesxhin.AnimeManga.Modules.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json.Linq;
 using System;

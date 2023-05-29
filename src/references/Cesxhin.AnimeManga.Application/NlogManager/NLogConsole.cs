@@ -2,7 +2,7 @@
 using NLog;
 using System;
 
-namespace Cesxhin.AnimeManga.Application.NlogManager
+namespace Cesxhin.AnimeManga.Modules.NlogManager
 {
     public class NLogConsole
     {

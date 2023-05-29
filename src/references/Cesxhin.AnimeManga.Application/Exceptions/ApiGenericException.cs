@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cesxhin.AnimeManga.Application.Exceptions
+namespace Cesxhin.AnimeManga.Modules.Exceptions
 {
     public class ApiGenericException : Exception
     {

@@ -1,7 +1,7 @@
 ﻿using Cesxhin.AnimeManga.Application.CheckManager.Interfaces;
-using Cesxhin.AnimeManga.Application.Exceptions;
+using Cesxhin.AnimeManga.Modules.Exceptions;
 using Cesxhin.AnimeManga.Application.Generic;
-using Cesxhin.AnimeManga.Application.NlogManager;
+using Cesxhin.AnimeManga.Modules.NlogManager;
 using Cesxhin.AnimeManga.Application.Parallel;
 using Cesxhin.AnimeManga.Domain.DTO;
 using MassTransit;

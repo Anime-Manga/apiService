@@ -1,4 +1,4 @@
-﻿using Cesxhin.AnimeManga.Application.NlogManager;
+﻿using Cesxhin.AnimeManga.Modules.NlogManager;
 using Cesxhin.AnimeManga.Application.Parallel;
 using Cesxhin.AnimeManga.Domain.DTO;
 using Cesxhin.AnimeManga.Domain.Models;

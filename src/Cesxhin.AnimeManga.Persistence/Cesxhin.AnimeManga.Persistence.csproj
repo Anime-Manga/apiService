@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cesxhin.AnimeManga.Application\Cesxhin.AnimeManga.Application.csproj" />
-    <ProjectReference Include="..\..\..\references\src\Cesxhin.AnimeManga.Domain\Cesxhin.AnimeManga.Domain.csproj" />
+    <ProjectReference Include="..\references\Cesxhin.AnimeManga.Domain\Cesxhin.AnimeManga.Domain.csproj" />
   </ItemGroup>
 
 </Project>

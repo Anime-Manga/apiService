@@ -46,10 +46,10 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
-                int rs = 0;
+                IEnumerable<WatchList> rs;
                 try
                 {
-                    rs = await connection.DeleteAsync(whiteList);
+                    rs = await connection.ExecuteQueryAsync<WatchList>($"DELETE FROM whitelist WHERE name = '{whiteList.Name}' AND username = '{whiteList.Username}' AND namecfg = '{whiteList.NameCfg}'");
                 }
                 catch (Exception ex)
                 {
@@ -57,7 +57,7 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
                     throw new ApiGenericException(ex.Message);
                 }
 
-                if (rs > 0)
+                if (rs != null && rs.Any())
                     return whiteList;
                 else
                     throw new ApiNotFoundException("Not found DeleteWhiteList");

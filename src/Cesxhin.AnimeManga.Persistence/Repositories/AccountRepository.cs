@@ -57,10 +57,7 @@ namespace Cesxhin.AnimeManga.Persistence.Repositories
                     throw new ApiGenericException(ex.Message);
                 }
 
-                if (rs != null && rs.Any())
-                    return whiteList;
-                else
-                    throw new ApiNotFoundException("Not found DeleteWhiteList");
+                return whiteList;
             }
         }
 

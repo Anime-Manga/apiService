@@ -1,8 +1,8 @@
-﻿using Cesxhin.AnimeManga.Application.Exceptions;
-using Cesxhin.AnimeManga.Application.HtmlAgilityPack;
-using Cesxhin.AnimeManga.Application.Interfaces.Controllers;
+﻿using Cesxhin.AnimeManga.Application.Interfaces.Controllers;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
-using Cesxhin.AnimeManga.Application.NlogManager;
+using Cesxhin.AnimeManga.Modules.NlogManager;
+using Cesxhin.AnimeManga.Modules.HtmlAgilityPack;
+using Cesxhin.AnimeManga.Modules.Exceptions;
 using Cesxhin.AnimeManga.Domain.DTO;
 using MassTransit;
 using Microsoft.AspNetCore.Http;

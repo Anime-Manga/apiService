@@ -25,6 +25,8 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         private readonly IEpisodeService _episodeService;
         private readonly IEpisodeRegisterService _episodeRegisterService;
         private readonly IProgressEpisodeService _progressEpisodeService;
+        private readonly IEpisodeQueueService _episodeQueueService;
+        private readonly IAccountService _accountService;
         private readonly IBus _publishEndpoint;
 
         //log
@@ -39,6 +41,8 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             IEpisodeRegisterService episodeRegisterService,
             IDescriptionVideoService descriptionService,
             IProgressEpisodeService progressEpisodeService,
+            IEpisodeQueueService episodeQueueService,
+            IAccountService accountService,
             IBus publishEndpoint
             )
         {
@@ -46,7 +50,9 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             _episodeService = episodeService;
             _episodeRegisterService = episodeRegisterService;
             _publishEndpoint = publishEndpoint;
+            _episodeQueueService = episodeQueueService;
             _progressEpisodeService = progressEpisodeService;
+            _accountService = accountService;
         }
 
         //get list all anime without filter
@@ -398,12 +404,26 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [HttpPost("/video/download")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO downloadClass)
+        public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO downloadClass, string username)
         {
             try
             {
+                AuthDTO account = null;
+                try
+                {
+                    await _accountService.FindAccountByUsername(username);
+                }
+                catch(ApiNotFoundException)
+                {
+                    throw new ApiNotAuthorizeException();
+                }
+
+                if (account.Role != 100)
+                    throw new ApiNotAuthorizeException();
+
                 JObject cfg = null;
 
                 if (!_schema.ContainsKey(downloadClass.nameCfg))
@@ -461,6 +481,10 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 return StatusCode(500);
             }
+            catch (ApiNotAuthorizeException)
+            {
+                return StatusCode(401);
+            }
             catch (Exception e)
             {
                 _logger.Error(e);
@@ -471,12 +495,26 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //reset state download of episodeRegister into db
         [HttpPut("/video/redownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<EpisodeDTO>))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RedownloadObjectByUrlPage(string name)
+        public async Task<IActionResult> RedownloadObjectByUrlPage(string name, string username)
         {
             try
             {
+                AuthDTO account = null;
+                try
+                {
+                    await _accountService.FindAccountByUsername(username);
+                }
+                catch (ApiNotFoundException)
+                {
+                    throw new ApiNotAuthorizeException();
+                }
+
+                if (account.Role != 100)
+                    throw new ApiNotAuthorizeException();
+
                 var rs = await _episodeService.ResetStatusMultipleDownloadObjectByIdAsync(name);
                 return Ok(rs);
             }
@@ -487,6 +525,10 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (ApiNotAuthorizeException)
+            {
+                return StatusCode(401);
             }
             catch (Exception)
             {
@@ -723,6 +765,97 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             catch (Exception)
             {
                 return StatusCode(500);
+            }
+        }
+
+        [HttpGet("/episode/queue")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericQueueDTO>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetObjectjQueue()
+        {
+            try
+            {
+                var result = await _episodeQueueService.GetObjectsQueue();
+                return Ok(result);
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("/episode/queue")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PutObjectQueue(DownloadDTO objectClass)
+        {
+            try
+            {
+                var result = await _episodeQueueService.PutObjectQueue(new GenericQueueDTO
+                {
+                    NameCfg = objectClass.nameCfg,
+                    Url = objectClass.Url
+                });
+                return Ok(result);
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpDelete("/episode/queue")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteObjectQueue(DownloadDTO objectClass)
+        {
+            try
+            {
+                var result = await _episodeQueueService.DeleteObjectQueue(new GenericQueueDTO
+                {
+                    NameCfg = objectClass.nameCfg,
+                    Url = objectClass.Url
+                });
+                return Ok(result);
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
     }

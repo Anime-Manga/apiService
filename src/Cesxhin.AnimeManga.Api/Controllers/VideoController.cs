@@ -18,7 +18,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class AnimeController : ControllerBase, IGeneralControllerBase<string, EpisodeDTO, EpisodeRegisterDTO, DownloadDTO, ProgressEpisodeDTO>
+    public class AnimeController : ControllerBase, IGeneralControllerBase<string, EpisodeDTO, EpisodeRegisterDTO, DownloadDTO, ProgressEpisodeDTO, GenericQueueDTO, GenericBlackListDTO>
     {
         //interfaces
         private readonly IDescriptionVideoService _descriptionService;
@@ -27,6 +27,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         private readonly IProgressEpisodeService _progressEpisodeService;
         private readonly IEpisodeQueueService _episodeQueueService;
         private readonly IAccountService _accountService;
+        private readonly IEpisodeBlackListService _episodeBlackListService;
         private readonly IBus _publishEndpoint;
 
         //log
@@ -42,6 +43,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             IDescriptionVideoService descriptionService,
             IProgressEpisodeService progressEpisodeService,
             IEpisodeQueueService episodeQueueService,
+            IEpisodeBlackListService episodeBlackListService,
             IAccountService accountService,
             IBus publishEndpoint
             )
@@ -53,6 +55,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             _episodeQueueService = episodeQueueService;
             _progressEpisodeService = progressEpisodeService;
             _accountService = accountService;
+            _episodeBlackListService = episodeBlackListService;
         }
 
         //get list all anime without filter
@@ -515,7 +518,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 AuthDTO account = null;
                 try
                 {
-                    await _accountService.FindAccountByUsername(username);
+                    account = await _accountService.FindAccountByUsername(username);
                 }
                 catch (ApiNotFoundException)
                 {
@@ -549,15 +552,29 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //delete description
         [HttpDelete("/video/{id}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteInfo(string nameCfg, string id)
+        public async Task<IActionResult> DeleteInfo(string nameCfg, string id, string username)
         {
             try
             {
                 if (_schema.ContainsKey(nameCfg))
                 {
+                    AuthDTO account = null;
+                    try
+                    {
+                        account = await _accountService.FindAccountByUsername(username);
+                    }
+                    catch (ApiNotFoundException)
+                    {
+                        throw new ApiNotAuthorizeException();
+                    }
+
+                    if (account.Role != 100)
+                        throw new ApiNotAuthorizeException();
+
                     var listEpisodeService = await _episodeService.GetObjectsByNameAsync(id);
                     var listEpisodeRegister = await _episodeRegisterService.GetObjectsRegistersByListObjectId(listEpisodeService.ToList());
                     var videoDescription = await _descriptionService.GetNameByNameAsync(nameCfg, id, null);
@@ -662,6 +679,24 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 {
                     var searchSchema = _schema.GetValue(nameCfg).ToObject<JObject>().GetValue("search").ToObject<JObject>();
                     var descriptionUrls = RipperVideoGeneric.GetVideoUrl(searchSchema, name);
+
+                    List<GenericBlackListDTO> listBlackList = new();
+                    try
+                    {
+                        listBlackList = await _episodeBlackListService.GetObjectsBlackList();
+                    }
+                    catch (ApiNotFoundException) { }
+
+                    if (listBlackList.Any())
+                    {
+                        descriptionUrls = descriptionUrls.Where(book =>
+                            listBlackList.Where(blackList =>
+                                book.Name == blackList.Name &&
+                                book.Url == blackList.Url &&
+                                nameCfg == blackList.NameCfg
+                            ).ToList().Count == 0
+                        ).ToList();
+                    }
 
                     //list anime
                     List<GenericUrlDTO> list = new();
@@ -809,15 +844,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PutObjectQueue(DownloadDTO objectClass)
+        public async Task<IActionResult> PutObjectQueue(GenericQueueDTO objectClass)
         {
             try
             {
-                var result = await _episodeQueueService.PutObjectQueue(new GenericQueueDTO
-                {
-                    NameCfg = objectClass.nameCfg,
-                    Url = objectClass.Url
-                });
+                var result = await _episodeQueueService.PutObjectQueue(objectClass);
                 return Ok(result);
             }
             catch (ApiNotFoundException)
@@ -843,15 +874,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteObjectQueue(DownloadDTO objectClass)
+        public async Task<IActionResult> DeleteObjectQueue(GenericQueueDTO objectClass)
         {
             try
             {
-                var result = await _episodeQueueService.DeleteObjectQueue(new GenericQueueDTO
-                {
-                    NameCfg = objectClass.nameCfg,
-                    Url = objectClass.Url
-                });
+                var result = await _episodeQueueService.DeleteObjectQueue(objectClass);
                 return Ok(result);
             }
             catch (ApiNotFoundException)
@@ -873,18 +900,52 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetObjectQueue(string url, string nameCfg)
+        public async Task<IActionResult> GetObjectQueue(string name, string url, string nameCfg)
         {
             try
             {
                 var result = await _episodeQueueService.GetObjectQueue(new GenericQueueDTO
                 {
+                    Name = name,
                     NameCfg = nameCfg,
                     Url = url
                 });
                 return Ok(result);
             }
             catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("/episode/blacklist")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericBlackListDTO))]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PutObjectBlackList(GenericBlackListDTO objectClass)
+        {
+            try
+            {
+                var result = await _episodeBlackListService.PutObjectBlackList(objectClass);
+
+                await _episodeQueueService.DeleteObjectQueue(new GenericQueueDTO {
+                    Name = objectClass.Name,
+                    Url = objectClass.Url,
+                    NameCfg = objectClass.NameCfg,
+                });
+
+                return Ok(result);
+            }
+            catch (ApiConflictException)
             {
                 return NotFound();
             }

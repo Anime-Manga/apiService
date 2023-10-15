@@ -3,16 +3,13 @@ using System.Threading.Tasks;
 
 namespace Cesxhin.AnimeManga.Application.Interfaces.Repositories
 {
-    public interface IGeneralObjectQueueRepository<T>
+    public interface IGeneralObjectBlackListRepository<T>
     {
         //get
-        Task<IEnumerable<T>> GetObjectsQueue();
-        Task<T> GetObjectQueue(T objectGeneral);
+        Task<T> GetObjectBlackList(T objectGeneral);
+        Task<IEnumerable<T>> GetObjectsBlackList();
 
         //put
-        Task<T> PutObjectQueue(T objectGeneral);
-
-        //delete
-        Task<int> DeleteObjectQueue(T objectGeneral);
+        Task<T> PutObjectBlackList(T objectGeneral);
     }
 }

@@ -859,7 +859,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             }
         }
 
-        [HttpGet("/chapter/queue")]
+        [HttpGet("/episode/queue")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

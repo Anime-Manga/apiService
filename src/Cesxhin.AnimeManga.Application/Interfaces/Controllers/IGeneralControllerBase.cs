@@ -17,7 +17,7 @@ namespace Cesxhin.AnimeManga.Application.Interfaces.Controllers
         public Task<IActionResult> GetListSearchByName(string nameCfg, string name);
         public Task<IActionResult> GetStateProgress(string name, string username, string nameCfg);
         public Task<IActionResult> GetObjectsQueue();
-        public Task<IActionResult> GetObjectQueue(D objectClass);
+        public Task<IActionResult> GetObjectQueue(string url, string nameCfg);
 
         //put
         public Task<IActionResult> PutInfo(string nameCfg, I infoClass);

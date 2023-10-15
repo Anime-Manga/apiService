@@ -562,7 +562,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 AuthDTO account = null;
                 try
                 {
-                    await _accountService.FindAccountByUsername(username);
+                    account = await _accountService.FindAccountByUsername(username);
                 }
                 catch (ApiNotFoundException)
                 {
@@ -636,6 +636,17 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                 //insert episodesRegisters
                 var episodeRegisterResult = await _chapterRegisterService.InsertObjectsRegistersAsync(listChapterRegister);
+
+                //delete if exist queue
+                try
+                {
+                    await _chapterQueueService.DeleteObjectQueue(new GenericQueueDTO
+                    {
+                        NameCfg = downloadClass.nameCfg,
+                        Url = downloadClass.Url
+                    });
+                }
+                catch (ApiNotFoundException) { }
 
                 //create message for notify
                 string message = $"🧮ApiService say: \nAdd new Manga: {name}\n";
@@ -829,7 +840,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             }
         }
 
-        [HttpGet("/chapter/many-queue")]
+        [HttpGet("/chapter/all-queue")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericQueueDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -924,14 +935,14 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetObjectQueue(DownloadDTO objectClass)
+        public async Task<IActionResult> GetObjectQueue(string url, string nameCfg)
         {
             try
             {
                 var result = await _chapterQueueService.GetObjectQueue(new GenericQueueDTO
                 {
-                    NameCfg = objectClass.nameCfg,
-                    Url = objectClass.Url
+                    NameCfg = nameCfg,
+                    Url = url
                 });
                 return Ok(result);
             }

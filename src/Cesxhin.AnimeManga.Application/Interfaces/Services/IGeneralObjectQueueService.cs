@@ -7,6 +7,7 @@ namespace Cesxhin.AnimeManga.Application.Interfaces.Services
     {
         //get
         Task<List<TObjectDTO>> GetObjectsQueue();
+        Task<TObjectDTO> GetObjectQueue(TObjectDTO objectGeneral);
 
         //put
         Task<TObjectDTO> PutObjectQueue(TObjectDTO objectGeneral);

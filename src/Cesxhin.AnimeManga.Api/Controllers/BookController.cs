@@ -829,11 +829,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             }
         }
 
-        [HttpGet("/chapter/queue")]
+        [HttpGet("/chapter/many-queue")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericQueueDTO>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetObjectjQueue()
+        public async Task<IActionResult> GetObjectsQueue()
         {
             try
             {
@@ -899,6 +899,36 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var result = await _chapterQueueService.DeleteObjectQueue(new GenericQueueDTO
+                {
+                    NameCfg = objectClass.nameCfg,
+                    Url = objectClass.Url
+                });
+                return Ok(result);
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("/chapter/queue")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetObjectQueue(DownloadDTO objectClass)
+        {
+            try
+            {
+                var result = await _chapterQueueService.GetObjectQueue(new GenericQueueDTO
                 {
                     NameCfg = objectClass.nameCfg,
                     Url = objectClass.Url

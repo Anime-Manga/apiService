@@ -27,6 +27,13 @@ namespace Cesxhin.AnimeManga.Application.Services
             return objectGeneral;
         }
 
+        public async Task<GenericQueueDTO> GetObjectQueue(GenericQueueDTO objectGeneral)
+        {
+            var find = await _episodeQueueRepository.GetObjectQueue(EpisodeQueue.GenericQueueDTOToEpisodeQueue(objectGeneral));
+
+            return GenericQueueDTO.EpisodeQueueToGenericQueueDTO(find);
+        }
+
         public async Task<List<GenericQueueDTO>> GetObjectsQueue()
         {
             var rs = await _episodeQueueRepository.GetObjectsQueue();

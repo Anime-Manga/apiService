@@ -670,7 +670,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 catch (ApiNotFoundException) { }
 
                 //create message for notify
-                string message = $"Add new Manga: {name}\n";
+                string message = $"Added: {name}\n";
 
                 try
                 {
@@ -913,7 +913,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 var result = await _chapterQueueService.PutObjectQueue(objectClass);
 
                 //create message for notify
-                string message = $"Someone like this manga: {objectClass.Name}\n";
+                string message = $"Someone likes: {objectClass.Name} [Manga]\n";
 
                 try
                 {

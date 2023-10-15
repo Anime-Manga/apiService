@@ -670,11 +670,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 catch (ApiNotFoundException) { }
 
                 //create message for notify
-                string message = $"🧮ApiService say: \nAdd new Manga: {name}\n";
+                string message = $"Add new Manga: {name}\n";
 
                 try
                 {
-                    var messageNotify = new NotifyDTO
+                    var messageNotify = new NotifyMangaDTO
                     {
                         Message = message,
                         Image = cover
@@ -768,11 +768,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     var book = await _bookService.DeleteNameByIdAsync(nameCfg, id);
 
                     //create message for notify
-                    string message = $"🧮ApiService say: \nRemoved this Manga by DB: {id}\n";
+                    string message = $"Removed this Manga by DB: {id}\n";
 
                     try
                     {
-                        var messageNotify = new NotifyDTO
+                        var messageNotify = new NotifyMangaDTO
                         {
                             Message = message,
                             Image = bookDescription.GetValue("cover").ToString()
@@ -911,6 +911,24 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var result = await _chapterQueueService.PutObjectQueue(objectClass);
+
+                //create message for notify
+                string message = $"Someone like this manga: {objectClass.Name}\n";
+
+                try
+                {
+                    var messageNotify = new NotifyRequestMangaDTO
+                    {
+                        Message = message
+                    };
+
+                    await _publishEndpoint.Publish(messageNotify);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                }
+
                 return Ok(result);
             }
             catch (ApiNotFoundException)

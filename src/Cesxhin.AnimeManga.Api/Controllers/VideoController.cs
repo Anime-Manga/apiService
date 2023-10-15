@@ -472,7 +472,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                 try
                 {
-                    var messageNotify = new NotifyDTO
+                    var messageNotify = new NotifyAnimeDTO
                     {
                         Message = message,
                         Image = description["cover"].ToString()
@@ -587,7 +587,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 
                     try
                     {
-                        var messageNotify = new NotifyDTO
+                        var messageNotify = new NotifyAnimeDTO
                         {
                             Message = message,
                             Image = videoDescription.GetValue("cover").ToString()
@@ -849,6 +849,24 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             try
             {
                 var result = await _episodeQueueService.PutObjectQueue(objectClass);
+
+                //create message for notify
+                string message = $"Someone like this anime: {objectClass.Name}\n";
+
+                try
+                {
+                    var messageNotify = new NotifyRequestAnimeDTO
+                    {
+                        Message = message
+                    };
+
+                    await _publishEndpoint.Publish(messageNotify);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                }
+
                 return Ok(result);
             }
             catch (ApiNotFoundException)

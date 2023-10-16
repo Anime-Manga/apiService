@@ -90,21 +90,10 @@ namespace Cesxhin.AnimeManga.Api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Cesxhin.AnimeManga.Api", Version = "v1" });
             });
 
-            //cronjob for check health
-            services.AddQuartz(q =>
-            {
-                q.UseMicrosoftDependencyInjectionJobFactory();
-                q.ScheduleJob<HealthJob>(trigger => trigger
-                    .StartNow()
-                    .WithDailyTimeIntervalSchedule(x => x.WithIntervalInSeconds(60)), job => job.WithIdentity("api"));
-            });
-
             //setup nlog
             var level = Environment.GetEnvironmentVariable("LOG_LEVEL")?.ToLower() ?? "info";
             LogLevel logLevel = NLogManager.GetLevel(level);
             NLogManager.Configure(logLevel);
-
-            services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

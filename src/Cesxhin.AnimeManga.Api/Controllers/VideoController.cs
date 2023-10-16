@@ -468,7 +468,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 catch (ApiNotFoundException) { }
 
                 //create message for notify
-                string message = $"Added: {description["name_id"]}\n";
+                string message = $"Added: {description["name_id"]} [Anime]\n";
 
                 try
                 {
@@ -583,7 +583,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     var videoResult = await _descriptionService.DeleteNameByIdAsync(nameCfg, id);
 
                     //create message for notify
-                    string message = $"🧮ApiService say: \nRemoved this Anime by DB: {id}\n";
+                    string message = $"Removed: {id} [Anime]\n";
 
                     try
                     {

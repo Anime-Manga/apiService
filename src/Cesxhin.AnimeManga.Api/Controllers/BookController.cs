@@ -670,7 +670,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 catch (ApiNotFoundException) { }
 
                 //create message for notify
-                string message = $"Added: {name}\n";
+                string message = $"Added: {name} [Manga]\n";
 
                 try
                 {
@@ -768,7 +768,7 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     var book = await _bookService.DeleteNameByIdAsync(nameCfg, id);
 
                     //create message for notify
-                    string message = $"Removed this Manga by DB: {id}\n";
+                    string message = $"Removed: {id} [Manga]\n";
 
                     try
                     {

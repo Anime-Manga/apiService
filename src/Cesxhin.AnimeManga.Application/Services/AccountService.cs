@@ -100,5 +100,12 @@ namespace Cesxhin.AnimeManga.Application.Services
 
             return resultArray;
         }
+
+        public async Task<AuthDTO> FindAccountByUsername(string username)
+        {
+            var result = await _accountRepository.FindAccountByUsername(username);
+
+            return AuthDTO.AuthToAuthDTO(result);
+        }
     }
 }

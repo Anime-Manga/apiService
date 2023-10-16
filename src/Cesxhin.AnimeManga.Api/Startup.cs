@@ -1,4 +1,3 @@
-using Cesxhin.AnimeManga.Modules.CronJob;
 using Cesxhin.AnimeManga.Modules.Generic;
 using Cesxhin.AnimeManga.Application.Interfaces.Repositories;
 using Cesxhin.AnimeManga.Application.Interfaces.Services;
@@ -43,6 +42,10 @@ namespace Cesxhin.AnimeManga.Api
             services.AddSingleton<IAccountService, AccountService>();
             services.AddSingleton<IProgressEpisodeService, ProgressEpisodeService>();
             services.AddSingleton<IProgressChapterService, ProgressChapterService>();
+            services.AddSingleton<IChapterQueueService, ChapterQueueService>();
+            services.AddSingleton<IEpisodeQueueService, EpisodeQueueService>();
+            services.AddSingleton<IChapterBlackListService, ChapterBlackListService>();
+            services.AddSingleton<IEpisodeBlackListService, EpisodeBlackListService>();
 
             //repositories
             services.AddSingleton<IEpisodeRepository, EpisodeRepository>();
@@ -53,6 +56,10 @@ namespace Cesxhin.AnimeManga.Api
             services.AddSingleton<IAccountRepository, AccountRepository>();
             services.AddSingleton<IProgressEpisodeRepository, ProgressEpisodeRepository>();
             services.AddSingleton<IProgressChapterRepository, ProgressChapterRepository>();
+            services.AddSingleton<IChapterQueueRepository, ChapterQueueRepository>();
+            services.AddSingleton<IEpisodeQueueRepository, EpisodeQueueRepository>();
+            services.AddSingleton<IChapterBlackListRepository, ChapterBlackListRepository>();
+            services.AddSingleton<IEpisodeBlackListRepository, EpisodeBlackListRepository>();
 
             //init repoDb
             RepoDb.PostgreSqlBootstrap.Initialize();
@@ -82,21 +89,10 @@ namespace Cesxhin.AnimeManga.Api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Cesxhin.AnimeManga.Api", Version = "v1" });
             });
 
-            //cronjob for check health
-            services.AddQuartz(q =>
-            {
-                q.UseMicrosoftDependencyInjectionJobFactory();
-                q.ScheduleJob<HealthJob>(trigger => trigger
-                    .StartNow()
-                    .WithDailyTimeIntervalSchedule(x => x.WithIntervalInSeconds(60)), job => job.WithIdentity("api"));
-            });
-
             //setup nlog
             var level = Environment.GetEnvironmentVariable("LOG_LEVEL")?.ToLower() ?? "info";
             LogLevel logLevel = NLogManager.GetLevel(level);
             NLogManager.Configure(logLevel);
-
-            services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

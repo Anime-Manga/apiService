@@ -18,13 +18,16 @@ namespace Cesxhin.AnimeManga.Api.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class BookController : ControllerBase, IGeneralControllerBase<string, ChapterDTO, ChapterRegisterDTO, DownloadDTO, ProgressChapterDTO>
+    public class BookController : ControllerBase, IGeneralControllerBase<string, ChapterDTO, ChapterRegisterDTO, DownloadDTO, ProgressChapterDTO, GenericQueueDTO, GenericBlackListDTO>
     {
         //interfaces
         private readonly IDescriptionBookService _bookService;
         private readonly IChapterService _chapterService;
         private readonly IChapterRegisterService _chapterRegisterService;
         private readonly IProgressChapterService _progressChapterService;
+        private readonly IChapterQueueService _chapterQueueService;
+        private readonly IAccountService _accountService;
+        private readonly IChapterBlackListService _chapterBlackListService;
         private readonly IBus _publishEndpoint;
 
         //log
@@ -39,6 +42,9 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             IChapterService chapterService,
             IChapterRegisterService chapterRegisterService,
             IProgressChapterService progressChapterService,
+            IChapterQueueService chapterQueueService,
+            IAccountService accountService,
+            IChapterBlackListService chapterBlackListService,
             IBus publishEndpoint
             )
         {
@@ -47,6 +53,9 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             _chapterService = chapterService;
             _chapterRegisterService = chapterRegisterService;
             _progressChapterService = progressChapterService;
+            _chapterQueueService = chapterQueueService;
+            _accountService = accountService;
+            _chapterBlackListService = chapterBlackListService;
         }
 
         //get list all manga without filter
@@ -285,6 +294,24 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     var searchSchema = _schema.GetValue(nameCfg).ToObject<JObject>().GetValue("search").ToObject<JObject>();
                     var bookUrls = RipperBookGeneric.GetBookUrl(searchSchema, name);
 
+                    List<GenericBlackListDTO> listBlackList = new();
+                    try
+                    {
+                        listBlackList = await _chapterBlackListService.GetObjectsBlackList();
+                    }
+                    catch (ApiNotFoundException) { }
+
+                    if (listBlackList.Any())
+                    {
+                        bookUrls = bookUrls.Where(book =>
+                            listBlackList.Where(blackList =>
+                                book.Name == blackList.Name &&
+                                book.Url == blackList.Url &&
+                                nameCfg == blackList.NameCfg
+                            ).ToList().Count == 0
+                        ).ToList();
+                    }
+
                     //list manga
                     List<GenericUrlDTO> list = new();
 
@@ -501,12 +528,26 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //reset state download of chapterRegister into db
         [HttpPut("/book/redownload")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ChapterDTO>))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RedownloadObjectByUrlPage(string name)
+        public async Task<IActionResult> RedownloadObjectByUrlPage(string name, string username)
         {
             try
             {
+                AuthDTO account = null;
+                try
+                {
+                    account = await _accountService.FindAccountByUsername(username);
+                }
+                catch (ApiNotFoundException)
+                {
+                    throw new ApiNotAuthorizeException();
+                }
+
+                if (account.Role != 100)
+                    throw new ApiNotAuthorizeException();
+
                 var result = await _chapterService.ResetStatusMultipleDownloadObjectByIdAsync(name);
                 return Ok(result);
             }
@@ -518,6 +559,10 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             {
                 return StatusCode(500);
             }
+            catch (ApiNotAuthorizeException)
+            {
+                return StatusCode(401);
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
@@ -528,12 +573,26 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         [HttpPost("/book/download")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO downloadClass)
+        public async Task<IActionResult> DownloadInfoByUrlPage(DownloadDTO downloadClass, string username)
         {
             try
             {
+                AuthDTO account = null;
+                try
+                {
+                    account = await _accountService.FindAccountByUsername(username);
+                }
+                catch (ApiNotFoundException)
+                {
+                    throw new ApiNotAuthorizeException();
+                }
+
+                if (account.Role != 100)
+                    throw new ApiNotAuthorizeException();
+
                 if (!_schema.ContainsKey(downloadClass.nameCfg))
                     return BadRequest();
 
@@ -599,12 +658,23 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 //insert episodesRegisters
                 var episodeRegisterResult = await _chapterRegisterService.InsertObjectsRegistersAsync(listChapterRegister);
 
+                //delete if exist queue
+                try
+                {
+                    await _chapterQueueService.DeleteObjectQueue(new GenericQueueDTO
+                    {
+                        NameCfg = downloadClass.nameCfg,
+                        Url = downloadClass.Url
+                    });
+                }
+                catch (ApiNotFoundException) { }
+
                 //create message for notify
-                string message = $"🧮ApiService say: \nAdd new Manga: {name}\n";
+                string message = $"Added: {name} [Manga]\n";
 
                 try
                 {
-                    var messageNotify = new NotifyDTO
+                    var messageNotify = new NotifyMangaDTO
                     {
                         Message = message,
                         Image = cover
@@ -625,6 +695,10 @@ namespace Cesxhin.AnimeManga.Api.Controllers
             catch (ApiGenericException)
             {
                 return StatusCode(500);
+            }
+            catch (ApiNotAuthorizeException)
+            {
+                return StatusCode(401);
             }
             catch (Exception ex)
             {
@@ -664,15 +738,29 @@ namespace Cesxhin.AnimeManga.Api.Controllers
         //delete manga
         [HttpDelete("/book/{id}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteInfo(string nameCfg, string id)
+        public async Task<IActionResult> DeleteInfo(string nameCfg, string id, string username)
         {
             try
             {
                 if (_schema.ContainsKey(nameCfg))
                 {
+                    AuthDTO account = null;
+                    try
+                    {
+                        account = await _accountService.FindAccountByUsername(username);
+                    }
+                    catch (ApiNotFoundException)
+                    {
+                        throw new ApiNotAuthorizeException();
+                    }
+
+                    if (account.Role != 100)
+                        throw new ApiNotAuthorizeException();
+
                     var listChapterService = await _chapterService.GetObjectsByNameAsync(id);
                     var listChapterRegister = await _chapterRegisterService.GetObjectsRegistersByListObjectId(listChapterService.ToList());
                     var bookDescription = await _bookService.GetNameByNameAsync(nameCfg, id, null);
@@ -680,11 +768,11 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                     var book = await _bookService.DeleteNameByIdAsync(nameCfg, id);
 
                     //create message for notify
-                    string message = $"🧮ApiService say: \nRemoved this Manga by DB: {id}\n";
+                    string message = $"Removed: {id} [Manga]\n";
 
                     try
                     {
-                        var messageNotify = new NotifyDTO
+                        var messageNotify = new NotifyMangaDTO
                         {
                             Message = message,
                             Image = bookDescription.GetValue("cover").ToString()
@@ -773,6 +861,172 @@ namespace Cesxhin.AnimeManga.Api.Controllers
                 return Ok(result);
             }
             catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("/chapter/all-queue")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GenericQueueDTO>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetObjectsQueue()
+        {
+            try
+            {
+                var result = await _chapterQueueService.GetObjectsQueue();
+                return Ok(result);
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("/chapter/queue")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PutObjectQueue(GenericQueueDTO objectClass)
+        {
+            try
+            {
+                var result = await _chapterQueueService.PutObjectQueue(objectClass);
+
+                //create message for notify
+                string message = $"Someone likes: {objectClass.Name} [Manga]\n";
+
+                try
+                {
+                    var messageNotify = new NotifyRequestMangaDTO
+                    {
+                        Message = message
+                    };
+
+                    await _publishEndpoint.Publish(messageNotify);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Cannot send message rabbit, details: {ex.Message}");
+                }
+
+                return Ok(result);
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (ApiConflictException)
+            {
+                return Conflict();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpDelete("/chapter/queue")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteObjectQueue(GenericQueueDTO objectClass)
+        {
+            try
+            {
+                var result = await _chapterQueueService.DeleteObjectQueue(objectClass);
+                return Ok(result);
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("/chapter/queue")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericQueueDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetObjectQueue(string name, string url, string nameCfg)
+        {
+            try
+            {
+                var result = await _chapterQueueService.GetObjectQueue(new GenericQueueDTO
+                {
+                    Name = name,
+                    NameCfg = nameCfg,
+                    Url = url
+                });
+                return Ok(result);
+            }
+            catch (ApiNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ApiGenericException)
+            {
+                return StatusCode(500);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("/chapter/blacklist")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GenericBlackListDTO))]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PutObjectBlackList(GenericBlackListDTO objectClass)
+        {
+            try
+            {
+                var result = await _chapterBlackListService.PutObjectBlackList(objectClass);
+
+                await _chapterQueueService.DeleteObjectQueue(new GenericQueueDTO
+                {
+                    Name = objectClass.Name,
+                    Url = objectClass.Url,
+                    NameCfg = objectClass.NameCfg,
+                });
+
+                return Ok(result);
+            }
+            catch (ApiConflictException)
             {
                 return NotFound();
             }

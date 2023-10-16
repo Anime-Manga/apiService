@@ -8,6 +8,7 @@ namespace Cesxhin.AnimeManga.Application.Interfaces.Services
     {
         public Task<AuthDTO> Login(string username, string password);
         public Task<AuthDTO> CreateAccount(string username, string password);
+        public Task<AuthDTO> FindAccountByUsername(string username);
 
         //whitelist generic
         public Task<IEnumerable<WatchListDTO>> GetListWatchListByUsername(string username);

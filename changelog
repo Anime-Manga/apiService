@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Released]
+## [2.1.0] - 16-10-2023
+### Added
+- Queue of request for accept to download or reject or add to blacklist
+
+### Changed
+- Message of the notify
+
+### Removed
+- Check Healt
+- Controllers of Check Healt and Check free space disk
+
 ## [2.0.1] - 17-06-2023
 ### Fixed
 - Wrong set primary key for add watchList

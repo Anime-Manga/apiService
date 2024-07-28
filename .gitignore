@@ -405,3 +405,9 @@ Properties
 
 schemas.json
 Cesxhin.AnimeManga.Api.csproj
+
+
+# node
+node_modules
+package-lock.json
+.env

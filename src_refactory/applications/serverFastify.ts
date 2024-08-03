@@ -1,14 +1,70 @@
+import { env, exit, platform } from "process";
+import fs from "fs";
 import Fastify from 'fastify';
 import { DateTime } from 'luxon';
-import { env } from 'process';
+import path from "path";
 import _ from "lodash";
 
 import Logger from './logger';
-const logger = new Logger("api");
+
+const logger = new Logger("server-fastify");
+const __dirname = path.resolve();
 
 //settings
 const fastify = Fastify();
 
+//init
+async function init(address: string = "127.0.0.1", port: number = 3001, path_controllers = "controllers"){
+    logger.info("Starting service fastify...");
+
+    //routes
+    logger.debug("Starting load routes");
+    await loadRouters(path_controllers);
+    logger.debug("Finish load all routes");
+
+    //server
+    let connection = "";
+    try{
+        connection = await fastify.listen({
+            port: _.isNil(env.SERVER_PORT)? 3001 : parseInt(env.SERVER_PORT),
+            host: env.SERVER_PORT || "127.0.0.1",
+        })
+    }catch(err){
+        logger.fatal(`Stop service fastify reason:`, err);
+        exit(1);
+    }
+    
+    logger.info(`Connection established ${connection}`);
+}
+
+//load routers
+async function loadRouters(path_controllers: string){
+    const listFileRoutes: Array<string> = [];
+
+    try{
+        listFileRoutes.push(...(fs.readdirSync(path.join(__dirname, path_controllers))).filter((file) => file.indexOf('.') !== -1));
+    }catch(err){
+        logger.error("Failed load routes reason:", err);
+    }
+
+    logger.debug("List routes available:", listFileRoutes.join(', '))
+    
+    let success = 0;
+    for (const route of listFileRoutes) {
+        try{
+            await import(path.join(platform === "win32"? 'file://' : '', __dirname, 'controllers', route));
+        }catch(err){
+            logger.error("Failed load", route);
+            continue;
+        }
+
+        success++;
+    }
+
+    logger.debug('Total routes loaded', success);
+}
+
+//logging
 fastify.addHook("onRequest", (req, replay, next) => {
     //@ts-ignores
     replay.startTime = DateTime.now().toISO();
@@ -48,3 +104,7 @@ fastify.addHook("onResponse", (req, replay, next) => {
 })
 
 export default fastify;
+
+export {
+    init
+}

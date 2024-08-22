@@ -6,15 +6,15 @@ import path from "path";
 import _ from "lodash";
 
 import Logger from './logger';
-
 const logger = new Logger("server-fastify");
+
 const __dirname = path.resolve();
 
 //settings
 const fastify = Fastify();
 
 //init
-async function init(address: string = "127.0.0.1", port: number = 3001, path_controllers = "controllers"){
+async function init(path_controllers = "controllers"){
     logger.info("Starting service fastify...");
 
     //routes

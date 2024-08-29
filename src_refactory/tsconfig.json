@@ -2,6 +2,9 @@
   "compilerOptions": {
     "moduleResolution": "Bundler",
     "module": "ESNext",
-    "target": "ESNext"
+    "target": "ESNext",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true
   }
 }

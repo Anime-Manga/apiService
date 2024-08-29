@@ -7,8 +7,8 @@
         {
             "type": "node-terminal",
             "request": "launch",
-            "name": "Launch Program",
-            "cwd": "${workspaceFolder}\\src_refactory",
+            "name": "Start",
+            "cwd": "${workspaceFolder}/src_refactory",
             "command": "npm run start"
         }
     ]

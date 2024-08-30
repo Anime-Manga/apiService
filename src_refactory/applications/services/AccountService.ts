@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import IAccountService from "../interfaces/services/IAccountService";
 import { IAccountDTO, IAccountDTOEnv } from "../../domain/interfaces/DTOs/IAccountDTO";
 import { IAccount, IAccountEnv } from "../../domain/interfaces/models/IAccount";
@@ -13,6 +15,14 @@ import { Account } from "../../domain/models/Account";
 export class AccountService implements IAccountService {
     accountRepository = new AccountRepository();
 
+    //get
+    async findFromUsername(username: string): Promise<IAccountDTO> {
+        const user = await this.accountRepository.findFromUsername(username);
+
+        return objectAssign(user, IAccountDTOEnv);
+    }
+
+    //post
     async login(username: string, password: string): Promise<IAccountDTO> {
         let user: Account;
 
@@ -29,11 +39,6 @@ export class AccountService implements IAccountService {
         if(hashPassword(password) !== user[IAccountEnv.PASSWORD]){
             throw new ApiUnauthorized("Username/Password wrong");
         }
-
-        return objectAssign(user, IAccountDTOEnv);
-    }
-    async findFromUsername(username: string): Promise<IAccountDTO> {
-        const user = await this.accountRepository.findFromUsername(username);
 
         return objectAssign(user, IAccountDTOEnv);
     }
@@ -55,10 +60,21 @@ export class AccountService implements IAccountService {
 
         throw new ApiConflict(`This username already used ${username}`);
     }
-    updateAccount(data: IAccount): Promise<IAccountDTO> {
-        throw new Error("Method not implemented.");
+
+    //update
+    async updateAccount(username: string, data: IAccount): Promise<IAccountDTO> {
+        const user = await this.accountRepository.findFromUsername(username);
+
+        await this.accountRepository.updateAccount(username, data);
+
+        //update information
+        const newUser = _.merge(user, data);
+
+        return objectAssign(newUser, IAccountDTOEnv);
     }
-    deleteAccount(username: string): void {
-        throw new Error("Method not implemented.");
+
+    //delete
+    async deleteAccount(username: string): Promise<void> {
+        await this.accountRepository.deleteAccount(username);
     }
 }

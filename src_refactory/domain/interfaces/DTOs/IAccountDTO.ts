@@ -3,7 +3,7 @@ export enum IAccountDTOEnv {
     LAST_ACCESS = "last_access",
     CHANGE_PASSWORD = "change_password",
     EXPIRE_PASSWORD = "expire_password",
-    AVATAR = "avatr"
+    PROFILE = "profile"
 }
 
 export interface IAccountDTO {
@@ -11,5 +11,5 @@ export interface IAccountDTO {
     [IAccountDTOEnv.LAST_ACCESS]: Date,
     [IAccountDTOEnv.CHANGE_PASSWORD]: Date,
     [IAccountDTOEnv.EXPIRE_PASSWORD]: Date,
-    [IAccountDTOEnv.AVATAR]: string
+    [IAccountDTOEnv.PROFILE]: string
 }

@@ -8,7 +8,7 @@ export default interface IAccountService {
     //put
     createAccount(data: IAccount): Promise<IAccountDTO>;
     //post
-    updateAccount(data: IAccount): Promise<IAccountDTO>;
+    updateAccount(username: string, data: Partial<IAccount>): Promise<IAccountDTO>;
     //delete
     deleteAccount(username: string): void;
 }

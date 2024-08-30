@@ -11,7 +11,7 @@ export default interface IAccountRepository {
     //put
     createAccount(data: IAccount): Promise<Account>;
     //post
-    updateAccount(data: IAccount): Promise<Account>;
+    updateAccount(username: string, data: Partial<IAccount>): Promise<void>;
     //delete
     deleteAccount(username: string): void;
 }

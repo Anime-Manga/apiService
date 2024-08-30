@@ -1,4 +1,4 @@
-import { Like } from "typeorm";
+import { DeleteResult, Like, UpdateResult } from "typeorm";
 
 import {pg} from "../../server/postgres";
 import { ApiErrorGeneric, ApiNotFound } from "../../modules/api";
@@ -14,11 +14,12 @@ const logger = new Logger("account-db");
 export default class AccountRepository implements IAccountRepository {
     connectionRepository = pg.getRepository(Account);
 
+    //get
     async findFromUsername(username: string): Promise<Account> {
         let rs: Account | null = null;
 
         try{
-            rs = await this.connectionRepository.findOneBy({ [IAccountEnv.USERNAME]: Like(username) });
+            rs = await this.connectionRepository.findOneBy({ [IAccountEnv.USERNAME]: username });
         }catch(err){
             logger.error("Failed exec query findFromUsername, details:", err);
             throw new ApiErrorGeneric(err);
@@ -30,8 +31,11 @@ export default class AccountRepository implements IAccountRepository {
 
         return rs;
     }
-    
+
+    //post
     async createAccount(data: IAccount): Promise<Account> {
+        data[IAccountEnv.USERNAME] = data[IAccountEnv.USERNAME].toLowerCase();
+
         try{
             await this.connectionRepository.insert(data)
         }catch(err){
@@ -41,11 +45,35 @@ export default class AccountRepository implements IAccountRepository {
 
         return data; 
     }
-    updateAccount(data: IAccount): Promise<Account> {
-        throw new Error("Method not implemented.");
+
+    //put
+    async updateAccount(username: string, data: IAccount): Promise<void> {
+        let rs: UpdateResult;
+        try{
+            rs = await this.connectionRepository.update({ [IAccountEnv.USERNAME]: username }, data);
+        }catch(err){
+            logger.error("Failed exec query updateAccount, details:", err);
+            throw new ApiErrorGeneric(err);
+        }
+
+        if(rs.affected <= 0){
+            throw new ApiNotFound(`Cannot update information of ${username}`);
+        }
     }
-    deleteAccount(username: string): void {
-        throw new Error("Method not implemented.");
+
+    //delete
+    async deleteAccount(username: string): Promise<void> {
+        let rs: DeleteResult;
+        try{
+            rs = await this.connectionRepository.delete({ [IAccountEnv.USERNAME]: username });
+        }catch(err){
+            logger.error("Failed exec query updateAccount, details:", err);
+            throw new ApiErrorGeneric(err);
+        }
+
+        if(rs.affected <= 0){
+            throw new ApiNotFound(`Cannot delete ${username}`);
+        }
     }
     
 }

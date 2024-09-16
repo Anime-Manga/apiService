@@ -1,3 +1,5 @@
+import { Type } from "@sinclair/typebox";
+
 export enum IAccountDTOEnv {
     USERNAME = "username",
     LAST_ACCESS = "last_access",
@@ -6,10 +8,12 @@ export enum IAccountDTOEnv {
     PROFILE = "profile"
 }
 
-export interface IAccountDTO {
-    [IAccountDTOEnv.USERNAME]: string,
-    [IAccountDTOEnv.LAST_ACCESS]: Date,
-    [IAccountDTOEnv.CHANGE_PASSWORD]: Date,
-    [IAccountDTOEnv.EXPIRE_PASSWORD]: Date,
-    [IAccountDTOEnv.PROFILE]: string
-}
+export const accountDTOSchema = Type.Object({
+    [IAccountDTOEnv.USERNAME]: Type.String({ maxLength: 250 }),
+    [IAccountDTOEnv.EXPIRE_PASSWORD]: Type.String({ format: "date-time" }),
+    [IAccountDTOEnv.LAST_ACCESS]: Type.Union([Type.Null(), Type.String({ format: "date-time" })]),
+    [IAccountDTOEnv.PROFILE]: Type.Union([Type.Null(), Type.String()]),
+    [IAccountDTOEnv.CHANGE_PASSWORD]: Type.Boolean()
+});
+
+export type IAccountDTO = typeof accountDTOSchema.static

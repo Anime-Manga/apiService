@@ -10,7 +10,6 @@ import {hashPassword} from "../../utils/AccountUtils";
 import { ApiConflict, ApiNotFound, ApiUnauthorized } from "../../modules/api";
 
 import { objectAssign } from "../../utils/utils";
-import { Account } from "../../domain/models/Account";
 
 export class AccountService implements IAccountService {
     accountRepository = new AccountRepository();
@@ -19,12 +18,12 @@ export class AccountService implements IAccountService {
     async findFromUsername(username: string): Promise<IAccountDTO> {
         const user = await this.accountRepository.findFromUsername(username);
 
-        return objectAssign(user, IAccountDTOEnv);
+        return objectAssign<IAccountDTO>(user, IAccountDTOEnv);
     }
 
     //post
     async login(username: string, password: string): Promise<IAccountDTO> {
-        let user: Account;
+        let user: IAccount;
 
         try{
             user = await this.accountRepository.findFromUsername(username);
@@ -40,9 +39,9 @@ export class AccountService implements IAccountService {
             throw new ApiUnauthorized("Username/Password wrong");
         }
 
-        return objectAssign(user, IAccountDTOEnv);
+        return objectAssign<IAccountDTO>(user, IAccountDTOEnv);
     }
-    async createAccount(data: IAccount): Promise<IAccountDTO> {
+    async createAccount(data: Partial<IAccount>): Promise<IAccountDTO> {
         const username = data[IAccountEnv.USERNAME];
 
         try{
@@ -50,9 +49,10 @@ export class AccountService implements IAccountService {
         }catch(e){
             if(e instanceof ApiNotFound){
                 data[IAccountEnv.PASSWORD] = hashPassword(data[IAccountEnv.PASSWORD]);
-                const createdAccount = await this.accountRepository.createAccount(data);
+                await this.accountRepository.createAccount(data);
 
-                return objectAssign(createdAccount, IAccountDTOEnv);
+                const user = await this.accountRepository.findFromUsername(data[IAccountEnv.USERNAME]);
+                return objectAssign<IAccountDTO>(user, IAccountDTOEnv);
             }else{
                 throw new e;
             }
@@ -62,7 +62,7 @@ export class AccountService implements IAccountService {
     }
 
     //update
-    async updateAccount(username: string, data: IAccount): Promise<IAccountDTO> {
+    async updateAccount(username: string, data: Partial<IAccount>): Promise<IAccountDTO> {
         const user = await this.accountRepository.findFromUsername(username);
 
         await this.accountRepository.updateAccount(username, data);
@@ -70,7 +70,7 @@ export class AccountService implements IAccountService {
         //update information
         const newUser = _.merge(user, data);
 
-        return objectAssign(newUser, IAccountDTOEnv);
+        return objectAssign<IAccountDTO>(newUser, IAccountDTOEnv);
     }
 
     //delete

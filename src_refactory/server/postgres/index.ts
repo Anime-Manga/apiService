@@ -4,7 +4,7 @@ import _ from "lodash";
 import Logger from "../../modules/logger";
 const logger = new Logger("pg");
 
-import { Account } from "../../domain/models/Account";
+import path from "path";
 
 let pg: DataSource;
 
@@ -22,7 +22,7 @@ async function init({
         username,
         password,
         database,
-        entities: [Account],
+        entities: [`${path.resolve()}/domain/models/*.ts`],
         synchronize: process.env.NODE_ENV === 'dev',
         connectTimeoutMS: 5000
     });

@@ -1,13 +1,11 @@
-import { env, exit, platform } from "process";
+import { env, exit } from "process";
 import fs from "fs";
 import Fastify from 'fastify';
 import { DateTime } from 'luxon';
 import path from "path";
 import _ from "lodash";
 
-import { ApiConflict, ApiErrorGeneric, ApiNotFound, ApiUnauthorized } from "../../modules/api";
-
-import { IController } from "./interfaces/IController";
+import { ApiBadRequest, ApiConflict, ApiErrorGeneric, ApiNotFound, ApiUnauthorized } from "../../modules/api";
 
 import Logger from '../../modules/logger';
 const logger = new Logger("server-fastify");
@@ -18,13 +16,71 @@ const __dirname = path.resolve();
 const fastify = Fastify();
 
 //init
-async function init(pathControllers = "controllers"){
+async function init(pathControllers = "controllers", pathSchemas){
     logger.info("Starting service fastify...");
+
+    await fastify.register(await import("@fastify/swagger"), {
+        openapi: {
+          openapi: '3.0.0',
+          info: {
+            title: 'Test swagger',
+            description: 'Testing the Fastify swagger API',
+            version: '0.1.0'
+          },
+          servers: [
+            {
+              url: 'http://localhost:3000',
+              description: 'Development server'
+            }
+          ],
+          tags: [
+            { name: 'user', description: 'User related end-points' },
+            { name: 'code', description: 'Code related end-points' }
+          ],
+          components: {
+            securitySchemes: {
+              apiKey: {
+                type: 'apiKey',
+                name: 'apiKey',
+                in: 'header'
+              }
+            }
+          },
+          externalDocs: {
+            url: 'https://swagger.io',
+            description: 'Find more info here'
+          }
+        }
+      });
+
+    await fastify.register(await import('@fastify/swagger-ui'), {
+        routePrefix: '/documentation',
+        uiConfig: {
+        docExpansion: 'full',
+        deepLinking: false
+        },
+        uiHooks: {
+        onRequest: function (request, reply, next) { next() },
+        preHandler: function (request, reply, next) { next() }
+        },
+        staticCSP: true,
+        transformStaticCSP: (header) => header,
+        transformSpecification: (swaggerObject, request, reply) => { return swaggerObject },
+        transformSpecificationClone: true
+    })
 
     //controllers
     logger.debug("Starting load controllers");
     await loadControllers(pathControllers);
     logger.debug("Finish load all controllers");
+
+    //schemas
+    logger.debug("Starting load schemas");
+    await loadSchemas(pathSchemas);
+    logger.debug("Finish load all schemas");
+
+    await fastify.ready()
+    fastify.swagger()
 
     //server
     let connection = "";
@@ -41,70 +97,111 @@ async function init(pathControllers = "controllers"){
     logger.info(`Connection established ${connection}`);
 }
 
-//load routers
-async function loadControllers(path_controllers: string){
-    const listFileControllers: Array<string> = [];
-    const basePathController = path.join(__dirname, path_controllers);
+//load controllers
+async function loadControllers(pathControllers: string){
+    const basePathController = path.join(__dirname, pathControllers);
 
     //get list folder inside controllers
-    const listControllers = fs.readdirSync(basePathController).map((singlePath) => path.join(path_controllers, singlePath));
-    
-    //get index every controller
-    for (const controller of listControllers) {
-        try{
-            listFileControllers.push(...(fs.readdirSync(controller)).filter((file) => file === "index.ts").map((singlePath) => path.join(controller, singlePath)));
-        }catch(err){
-            logger.error("Failed load controllers reason:", err);
-        } 
+    let listFileControllers: Array<string> = [];
+    try{
+        listFileControllers = fs.readdirSync(basePathController).filter((file) => file.indexOf('.') === -1).map((folder) => path.join(basePathController, folder));
+    }catch(err){
+        logger.fatal("Cannot read folder", pathControllers, "details: ", err);
+        exit(1);
     }
-
-    logger.debug("List controllers available:", listFileControllers.join(', '))
+    
+    logger.debug("List controllers available:", listFileControllers.map((file) => path.basename(file)));
+    logger.debug("Controllers", `(${listFileControllers.length})`, "available");
     
     let success = 0;
     for (const fileController of listFileControllers) {
-        let controller: IController;
+        const totalRoutes = await loadRoutes(fileController);
 
-        try{
-            controller = (await import(path.join(platform === "win32"? 'file://' : '', __dirname, fileController))).default;
-        }catch(err){
-            logger.error("Failed load", `"${fileController}", details:`, err);
-            continue;
+        if(totalRoutes > 0){
+            logger.debug("Done import controller", path.basename(fileController));
+            success++;
+        }else{
+            logger.error("Controller", path.basename(fileController), "maybe has some error");
         }
+    }
 
-        loadRoutes(controller, fileController);
-
-        success++;
+    if(success === 0){
+        logger.fatal("controllers none loaded");
+        exit(1);
     }
 
     logger.debug('Total controllers loaded', success);
 }
 
-function loadRoutes(controller: IController, nameController: string){
-    logger.debug("Routes", `(${Object.keys(controller.routes).length})`, "available");
+//load routes
+async function loadRoutes(pathController: string){
+    let listFileRoutes: Array<string> = [];
+
+    try{
+        listFileRoutes = fs.readdirSync(pathController).filter((file) => file.indexOf(".") !== -1).map((file) => path.join(pathController, file));
+    }catch(err){
+        logger.error("Cannot read controller", path.basename(pathController), "details:", err);
+    }
+
+    logger.debug("List routes available", listFileRoutes.map((file) => path.basename(file)));
+    logger.debug("Routes", `(${listFileRoutes.length})`, "available");
 
     let success = 0;
-    for (const route in controller.routes) {
-        const pathRoute = path.join(controller.pathBaseController, controller.routes[route].url);
+    for (const fileRoute of listFileRoutes) {
         try{
-            fastify.route({
-                url: pathRoute,
-                method: controller.routes[route].method,
-                handler: controller.routes[route].hander,
-                validatorCompiler: ({ schema }) => {
-                    //@ts-ignore
-                    return data => schema.validate(data)
-                },
-                ...controller.routes[route].options
-            })
+            await import(fileRoute);
         }catch(err){
-            logger.error("Failed load route", `"${pathRoute}" details:`, err);
+            logger.error("Failed load route", `"${fileRoute}" details:`, err);
             continue;
         }
-        
+
+        logger.debug("Done import route", path.basename(fileRoute));
         success++;
     }
 
-    logger.debug('Loaded', `(${success}) routes from`, nameController);
+    logger.debug('Loaded', `(${success}) routes from`, path.basename(pathController));
+    return success;
+}
+
+//load schemas
+async function loadSchemas(pathSchemas = "schemas"){
+    const basePathSchemas = path.join(__dirname, pathSchemas);
+
+    if(!fs.existsSync(basePathSchemas)){
+        logger.warn("Not exist root folder schemas, skip schemas")
+        return;
+    }
+
+    //get list folder inside controllers
+    const listFileSchemas = fs.readdirSync(basePathSchemas, {recursive: true, withFileTypes: true}).filter((singlePath) =>  singlePath.isFile()).map((singlePath) => path.join(singlePath.parentPath, singlePath.name));
+
+    logger.debug(`List schemas available: ${listFileSchemas.map((file) => path.basename(file))}`);
+
+    let success = 0;
+    let listSchemas: Array<any>;
+    for (const fileSchema of listFileSchemas) {
+        try{
+            listSchemas = (await import(fileSchema)).default;
+        }catch(err){
+            logger.error(`Failed load schema "${path.basename(fileSchema)}", details:`, err);
+            continue;
+        }
+
+        if(!_.isNil(listSchemas)){
+            for (const schema of listSchemas) {
+                try{
+                    fastify.addSchema(schema)
+                }catch(err){
+                    logger.error(`Failed add specific schema of ${schema['$id']}, details:`, err);
+                }
+            }
+        }
+
+        logger.debug("Done import schema", path.basename(fileSchema));
+        success++;
+    }
+
+    logger.debug("Total schemas loaded", success);
 }
 
 //logging
@@ -173,6 +270,11 @@ fastify.setErrorHandler((error, request, replay) => {
         return replay.status(500).send({
             ...message,
             statusCode: 500
+        });
+    }else if(error instanceof ApiBadRequest){
+        return replay.status(400).send({
+            ...message,
+            statusCode: 400
         });
     }else{
         logger.error(error);

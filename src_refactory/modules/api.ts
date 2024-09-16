@@ -22,10 +22,17 @@ class ApiUnauthorized extends Error {
       this.name = "ApiUnauthorized";
     }
 }
+class ApiBadRequest extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "ApiBadRequest";
+    }
+}
 
 export {
     ApiNotFound,
     ApiErrorGeneric,
     ApiConflict,
-    ApiUnauthorized
+    ApiUnauthorized,
+    ApiBadRequest
 }

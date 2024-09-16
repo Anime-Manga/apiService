@@ -1,3 +1,5 @@
+import { Type } from "@sinclair/typebox";
+
 export enum IAccountEnv {
     USERNAME = "username",
     PASSWORD = "password",
@@ -7,11 +9,13 @@ export enum IAccountEnv {
     PROFILE = "profile"
 }
 
-export interface IAccount {
-    [IAccountEnv.USERNAME]: string,
-    [IAccountEnv.PASSWORD]: string,
-    [IAccountEnv.LAST_ACCESS]: Date | null,
-    [IAccountEnv.CHANGE_PASSWORD]: boolean,
-    [IAccountEnv.EXPIRE_PASSWORD]: Date,
-    [IAccountEnv.PROFILE]: string
-}
+export const accountSchema = Type.Object({
+    [IAccountEnv.USERNAME]: Type.String({ maxLength: 250 }),
+    [IAccountEnv.PASSWORD]: Type.String({ maxLength: 250 }),
+    [IAccountEnv.EXPIRE_PASSWORD]: Type.String({ format: "date-time" }),
+    [IAccountEnv.LAST_ACCESS]: Type.Union([Type.Null(), Type.String({ format: "date-time" })]),
+    [IAccountEnv.PROFILE]: Type.Union([Type.Null(), Type.String()]),
+    [IAccountEnv.CHANGE_PASSWORD]: Type.Boolean()
+});
+
+export type IAccount = typeof accountSchema.static

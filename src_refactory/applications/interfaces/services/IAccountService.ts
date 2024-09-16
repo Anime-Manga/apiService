@@ -6,7 +6,7 @@ export default interface IAccountService {
     findFromUsername(username: string): Promise<IAccountDTO>;
     login(username: string, password: string): Promise<IAccountDTO>;
     //put
-    createAccount(data: IAccount): Promise<IAccountDTO>;
+    createAccount(data: Partial<IAccount>): Promise<IAccountDTO>;
     //post
     updateAccount(username: string, data: Partial<IAccount>): Promise<IAccountDTO>;
     //delete

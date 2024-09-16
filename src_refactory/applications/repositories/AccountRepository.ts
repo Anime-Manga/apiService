@@ -1,4 +1,4 @@
-import { DeleteResult, Like, UpdateResult } from "typeorm";
+import { DeleteResult, UpdateResult } from "typeorm";
 
 import {pg} from "../../server/postgres";
 import { ApiErrorGeneric, ApiNotFound } from "../../modules/api";
@@ -12,11 +12,11 @@ import Logger from "../../modules/logger";
 const logger = new Logger("account-db");
 
 export default class AccountRepository implements IAccountRepository {
-    connectionRepository = pg.getRepository(Account);
+    connectionRepository = pg.getRepository<IAccount>(Account);
 
     //get
-    async findFromUsername(username: string): Promise<Account> {
-        let rs: Account | null = null;
+    async findFromUsername(username: string): Promise<IAccount> {
+        let rs: IAccount | null = null;
 
         try{
             rs = await this.connectionRepository.findOneBy({ [IAccountEnv.USERNAME]: username });
@@ -33,7 +33,7 @@ export default class AccountRepository implements IAccountRepository {
     }
 
     //post
-    async createAccount(data: IAccount): Promise<Account> {
+    async createAccount(data: Partial<IAccount>): Promise<void> {
         data[IAccountEnv.USERNAME] = data[IAccountEnv.USERNAME].toLowerCase();
 
         try{
@@ -42,12 +42,10 @@ export default class AccountRepository implements IAccountRepository {
             logger.error("Failed exec query createAccount, details:", err);
             throw new ApiErrorGeneric(err);
         }
-
-        return data; 
     }
 
     //put
-    async updateAccount(username: string, data: IAccount): Promise<void> {
+    async updateAccount(username: string, data: Partial<IAccount>): Promise<void> {
         let rs: UpdateResult;
         try{
             rs = await this.connectionRepository.update({ [IAccountEnv.USERNAME]: username }, data);

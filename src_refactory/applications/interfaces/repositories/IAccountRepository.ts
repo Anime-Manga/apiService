@@ -1,15 +1,12 @@
-import { Repository } from "typeorm";
-
 import { Account } from "../../../domain/models/Account";
 import { IAccount } from "../../../domain/interfaces/models/IAccount";
+import IConnectionRepository from "./generic/IConnectionRepository";
 
-export default interface IAccountRepository {
-    connectionRepository: Repository<Account>;
-
+export default interface IAccountRepository extends IConnectionRepository<IAccount>{
     //get
-    findFromUsername(username: string): Promise<Account>;
+    findFromUsername(username: string): Promise<IAccount>;
     //put
-    createAccount(data: IAccount): Promise<Account>;
+    createAccount(data: IAccount): Promise<void>;
     //post
     updateAccount(username: string, data: Partial<IAccount>): Promise<void>;
     //delete

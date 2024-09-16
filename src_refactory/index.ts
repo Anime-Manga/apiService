@@ -12,4 +12,4 @@ await initPostgres({
     database: process.env.POSTGRES_DB
 });
 
-await initServerFastify();
+await initServerFastify({});

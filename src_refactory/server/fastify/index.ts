@@ -1,10 +1,11 @@
-import { env, exit } from "process";
 import fs from "fs";
+import _ from "lodash";
+import path from "path";
 import Fastify from 'fastify';
 import { DateTime } from 'luxon';
-import path from "path";
-import _ from "lodash";
+import { env, exit } from "process";
 
+import { IConfig } from "./interfaces/IConfig";
 import { ApiBadRequest, ApiConflict, ApiErrorGeneric, ApiNotFound, ApiUnauthorized } from "../../modules/api";
 
 import Logger from '../../modules/logger';
@@ -16,58 +17,27 @@ const __dirname = path.resolve();
 const fastify = Fastify();
 
 //init
-async function init(pathControllers = "controllers", pathSchemas){
+async function init({pathControllers = "controllers", pathSchemas = "schemas", swagger = true}: IConfig){
     logger.info("Starting service fastify...");
 
-    await fastify.register(await import("@fastify/swagger"), {
-        openapi: {
-          openapi: '3.0.0',
-          info: {
-            title: 'Test swagger',
-            description: 'Testing the Fastify swagger API',
-            version: '0.1.0'
-          },
-          servers: [
-            {
-              url: 'http://localhost:3000',
-              description: 'Development server'
-            }
-          ],
-          tags: [
-            { name: 'user', description: 'User related end-points' },
-            { name: 'code', description: 'Code related end-points' }
-          ],
-          components: {
-            securitySchemes: {
-              apiKey: {
-                type: 'apiKey',
-                name: 'apiKey',
-                in: 'header'
-              }
-            }
-          },
-          externalDocs: {
-            url: 'https://swagger.io',
-            description: 'Find more info here'
-          }
-        }
-      });
-
-    await fastify.register(await import('@fastify/swagger-ui'), {
-        routePrefix: '/documentation',
-        uiConfig: {
-        docExpansion: 'full',
-        deepLinking: false
-        },
-        uiHooks: {
-        onRequest: function (request, reply, next) { next() },
-        preHandler: function (request, reply, next) { next() }
-        },
-        staticCSP: true,
-        transformStaticCSP: (header) => header,
-        transformSpecification: (swaggerObject, request, reply) => { return swaggerObject },
-        transformSpecificationClone: true
-    })
+    //swagger
+    if(swagger){
+        logger.debug("Starting load swagger");
+        await fastify.register(await import("@fastify/swagger"));
+        await fastify.register(await import('@fastify/swagger-ui'), {
+            routePrefix: '/',
+            uiConfig: {
+                docExpansion: 'list',
+                deepLinking: false
+            },
+            uiHooks: {
+                onRequest: function (request, reply, next) { next() },
+                preHandler: function (request, reply, next) { next() }
+            },
+            logLevel: "error"
+        })
+        logger.debug("Finish load swagger");
+    }
 
     //controllers
     logger.debug("Starting load controllers");
@@ -164,7 +134,7 @@ async function loadRoutes(pathController: string){
 }
 
 //load schemas
-async function loadSchemas(pathSchemas = "schemas"){
+async function loadSchemas(pathSchemas){
     const basePathSchemas = path.join(__dirname, pathSchemas);
 
     if(!fs.existsSync(basePathSchemas)){

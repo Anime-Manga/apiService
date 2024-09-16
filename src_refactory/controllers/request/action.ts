@@ -1,18 +1,22 @@
 import { RouteShorthandOptions } from "fastify";
 
-import fastify from "../../server/fastify";
 import { RequestService } from "../../applications/services/RequestService";
+
 import { PATH_BASE_CONTROLLER, SCHEMA_ACTION_REQUEST, staticActionRequest } from "../../schemas/requestSchema";
-import { SCHEMA_ERROR, SCHEMA_RETURN_VOID } from "../../schemas/generic/genericSchema";
+import { SCHEMA_INTERNAL_SERVER, SCHEMA_RETURN_VOID } from "../../schemas/generic/genericSchema";
+
+import fastify from "../../server/fastify";
 
 const requestService = new RequestService();
 
 const options: RouteShorthandOptions  = {
     schema: {
+        tags: ['request'],
+        summary: 'Choose accept or refuse request friend',
         querystring: { $ref: SCHEMA_ACTION_REQUEST },
         response: {
             200: { $ref: SCHEMA_RETURN_VOID },
-            500: { $ref: SCHEMA_ERROR },
+            500: { $ref: SCHEMA_INTERNAL_SERVER },
         }
     }
 }

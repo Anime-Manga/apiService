@@ -13,7 +13,7 @@ export const accountDTOSchema = Type.Object({
     [IAccountDTOEnv.EXPIRE_PASSWORD]: Type.String({ format: "date-time" }),
     [IAccountDTOEnv.LAST_ACCESS]: Type.Union([Type.Null(), Type.String({ format: "date-time" })]),
     [IAccountDTOEnv.PROFILE]: Type.Union([Type.Null(), Type.String()]),
-    [IAccountDTOEnv.CHANGE_PASSWORD]: Type.Boolean()
+    [IAccountDTOEnv.CHANGE_PASSWORD]: Type.Boolean({ default: false })
 });
 
 export type IAccountDTO = typeof accountDTOSchema.static

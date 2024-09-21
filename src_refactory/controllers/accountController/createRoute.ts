@@ -9,19 +9,19 @@ import fastify from "../../server/fastify";
 
 const accountService = new AccountService();
 
-const options: RouteShorthandOptions  = {
+const options: RouteShorthandOptions = {
     schema: {
-        tags: ['account'],
-        summary: 'Create new account',
+        tags: ["account"],
+        summary: "Create new account",
         body: { $ref: SCHEMA_CREATE_ACCOUNT },
         response: {
             200: { $ref: SCHEMA_RETURN_ACCOUNT },
             500: { $ref: SCHEMA_INTERNAL_SERVER },
-            401: { $ref: SCHEMA_BAD_REQUEST },
+            401: { $ref: SCHEMA_BAD_REQUEST }
         }
     }
-}
+};
 
 fastify.post<{Querystring: staticCreateAccount}>(`${PATH_BASE_CONTROLLER}/create`, options, async (request) => {
     return await accountService.createAccount(request.body);
-})
+});

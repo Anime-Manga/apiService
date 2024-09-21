@@ -1,5 +1,4 @@
 import { DataSource } from "typeorm";
-import _ from "lodash";
 
 import Logger from "../../modules/logger";
 const logger = new Logger("pg");
@@ -23,22 +22,22 @@ async function init({
         password,
         database,
         entities: [`${path.resolve()}/domain/models/*.ts`],
-        synchronize: process.env.NODE_ENV === 'dev',
+        synchronize: process.env.NODE_ENV === "dev",
         connectTimeoutMS: 5000
     });
 
-    try{
+    try {
         pg = await pg.initialize();
-    }catch(err){
-        logger.error('Error initialize postgres, reason:', err);
+    } catch (err){
+        logger.error("Error initialize postgres, reason:", err);
         return;
     }
 
     logger.debug("String connection:", `${address}:${port}`);
-    logger.info("Connected to pg!")
+    logger.info("Connected to pg!");
 }
 
 export {
     pg,
     init
-}
+};

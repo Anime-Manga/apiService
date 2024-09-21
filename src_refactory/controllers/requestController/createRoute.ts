@@ -9,22 +9,22 @@ import fastify from "../../server/fastify";
 
 const requestService = new RequestService();
 
-const options: RouteShorthandOptions  = {
+const options: RouteShorthandOptions = {
     schema: {
-        tags: ['request'],
-        summary: 'Create request friend',
+        tags: ["request"],
+        summary: "Create request friend",
         body: { $ref: SCHEMA_CREATE_REQUEST },
         response: {
             200: { $ref: SCHEMA_RETURN_VOID },
             401: { $ref: SCHEMA_BAD_REQUEST },
             404: { $ref: SCHEMA_NOT_FOUND },
-            500: { $ref: SCHEMA_INTERNAL_SERVER },
+            500: { $ref: SCHEMA_INTERNAL_SERVER }
         }
     }
-}
+};
 
 fastify.post<{Body: staticCreateRequest}>(`${PATH_BASE_CONTROLLER}/create`, options, async (request) => {
     await requestService.create(request.body);
 
-    return { response: "ok" }
-})
+    return { response: "ok" };
+});

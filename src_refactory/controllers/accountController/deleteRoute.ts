@@ -9,23 +9,23 @@ import fastify from "../../server/fastify";
 
 const accountService = new AccountService();
 
-const options: RouteShorthandOptions  = {
+const options: RouteShorthandOptions = {
     schema: {
-        tags: ['account'],
-        summary: 'Delete account',
+        tags: ["account"],
+        summary: "Delete account",
         querystring: { $ref: SCHEMA_QUERY_USERNAME_ACCOUNT },
         response: {
             200: { $ref: SCHEMA_RETURN_VOID },
             500: { $ref: SCHEMA_INTERNAL_SERVER },
-            404: { $ref: SCHEMA_NOT_FOUND },
+            404: { $ref: SCHEMA_NOT_FOUND }
         }
     }
-}
+};
 
 fastify.delete<{Querystring: staticQueryUsernameAccount}>(`${PATH_BASE_CONTROLLER}/delete`, options, async (request) => {
     const {username} = request.query;
 
     await accountService.deleteAccount(username);
 
-    return { response: "ok" }
-})
+    return { response: "ok" };
+});

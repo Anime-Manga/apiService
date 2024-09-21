@@ -1,5 +1,5 @@
-import {IAccountDTO} from "../../../domain/interfaces/DTOs/IAccountDTO"
-import {IAccount} from "../../../domain/interfaces/models/IAccount"
+import {IAccountDTO} from "../../../domain/interfaces/DTOs/IAccountDTO";
+import {IAccount} from "../../../domain/interfaces/models/IAccount";
 
 export default interface IAccountService {
     //get
@@ -11,4 +11,4 @@ export default interface IAccountService {
     updateAccount(username: string, data: Partial<IAccount>): Promise<IAccountDTO>;
     //delete
     deleteAccount(username: string): void;
-}
+} // eslint-disable-line @stylistic/semi

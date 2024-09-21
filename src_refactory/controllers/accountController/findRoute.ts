@@ -9,21 +9,21 @@ import fastify from "../../server/fastify";
 
 const accountService = new AccountService();
 
-const options: RouteShorthandOptions  = {
+const options: RouteShorthandOptions = {
     schema: {
-        tags: ['account'],
-        summary: 'Find account',
+        tags: ["account"],
+        summary: "Find account",
         querystring: { $ref: SCHEMA_QUERY_USERNAME_ACCOUNT },
         response: {
             200: { $ref: SCHEMA_RETURN_ACCOUNT },
             500: { $ref: SCHEMA_INTERNAL_SERVER },
-            404: { $ref: SCHEMA_NOT_FOUND },
+            404: { $ref: SCHEMA_NOT_FOUND }
         }
     }
-}
+};
 
 fastify.get<{Querystring: staticQueryUsernameAccount}>(`${PATH_BASE_CONTROLLER}/find`, options, async (request) => {
     const {username} = request.query;
 
     return await accountService.findFromUsername(username);
-})
+});

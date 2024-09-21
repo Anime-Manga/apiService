@@ -9,7 +9,7 @@ export enum IRequestDTOEnv {
 export const requestDTOSchema = Type.Object({
     [IRequestDTOEnv.REQUEST_FROM]: Type.String({maxLength: 250}),
     [IRequestDTOEnv.REQUEST_TO]: Type.String({maxLength: 250}),
-    [IRequestDTOEnv.REQUEST_TIME]: Type.String({format: 'date-time'}),
-})
+    [IRequestDTOEnv.REQUEST_TIME]: Type.String({format: "date-time"})
+});
 
 export type IRequestDTO = typeof requestDTOSchema.static

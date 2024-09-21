@@ -1,4 +1,4 @@
-import { IRequest } from "../../../domain/interfaces/models/IRequest"
+import { IRequest } from "../../../domain/interfaces/models/IRequest";
 import { Request } from "../../../domain/models/Request";
 import IConnectionRepository from "./generic/IConnectionRepository";
 
@@ -13,4 +13,4 @@ export default interface IRequestRepository extends IConnectionRepository<Reques
     
     //delete
     delete(request_from: string, request_to: string): Promise<void>
-}
+} // eslint-disable-line @stylistic/semi

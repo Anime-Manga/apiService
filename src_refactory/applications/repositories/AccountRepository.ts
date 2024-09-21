@@ -18,14 +18,14 @@ export default class AccountRepository implements IAccountRepository {
     async findFromUsername(username: string): Promise<IAccount> {
         let rs: IAccount | null = null;
 
-        try{
+        try {
             rs = await this.connectionRepository.findOneBy({ [IAccountEnv.USERNAME]: username });
-        }catch(err){
+        } catch (err){
             logger.error("Failed exec query findFromUsername, details:", err);
             throw new ApiErrorGeneric(err);
         }
 
-        if(rs === null){
+        if (rs === null){
             throw new ApiNotFound(`Not found this username '${username}'`);
         }
 
@@ -36,9 +36,9 @@ export default class AccountRepository implements IAccountRepository {
     async createAccount(data: Partial<IAccount>): Promise<void> {
         data[IAccountEnv.USERNAME] = data[IAccountEnv.USERNAME].toLowerCase();
 
-        try{
-            await this.connectionRepository.insert(data)
-        }catch(err){
+        try {
+            await this.connectionRepository.insert(data);
+        } catch (err){
             logger.error("Failed exec query createAccount, details:", err);
             throw new ApiErrorGeneric(err);
         }
@@ -47,14 +47,14 @@ export default class AccountRepository implements IAccountRepository {
     //put
     async updateAccount(username: string, data: Partial<IAccount>): Promise<void> {
         let rs: UpdateResult;
-        try{
+        try {
             rs = await this.connectionRepository.update({ [IAccountEnv.USERNAME]: username }, data);
-        }catch(err){
+        } catch (err){
             logger.error("Failed exec query updateAccount, details:", err);
             throw new ApiErrorGeneric(err);
         }
 
-        if(rs.affected <= 0){
+        if (rs.affected <= 0){
             throw new ApiNotFound(`Cannot update information of ${username}`);
         }
     }
@@ -62,14 +62,14 @@ export default class AccountRepository implements IAccountRepository {
     //delete
     async deleteAccount(username: string): Promise<void> {
         let rs: DeleteResult;
-        try{
+        try {
             rs = await this.connectionRepository.delete({ [IAccountEnv.USERNAME]: username });
-        }catch(err){
+        } catch (err){
             logger.error("Failed exec query updateAccount, details:", err);
             throw new ApiErrorGeneric(err);
         }
 
-        if(rs.affected <= 0){
+        if (rs.affected <= 0){
             throw new ApiNotFound(`Cannot delete ${username}`);
         }
     }

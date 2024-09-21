@@ -6,10 +6,10 @@ import { IAccount, IAccountEnv } from "../../domain/interfaces/models/IAccount";
 
 import AccountRepository from "../repositories/AccountRepository";
 
-import {hashPassword} from "../../utils/AccountUtils";
+import {hashPassword} from "../../utils/accountUtils";
 import { ApiConflict, ApiNotFound, ApiUnauthorized } from "../../modules/api";
 
-import { objectAssign } from "../../utils/utils";
+import { objectAssign } from "../../utils/genericUtils";
 
 export class AccountService implements IAccountService {
     accountRepository = new AccountRepository();
@@ -25,17 +25,17 @@ export class AccountService implements IAccountService {
     async login(username: string, password: string): Promise<IAccountDTO> {
         let user: IAccount;
 
-        try{
+        try {
             user = await this.accountRepository.findFromUsername(username);
-        }catch(e){
-            if(e instanceof ApiNotFound){
+        } catch (e){
+            if (e instanceof ApiNotFound){
                 throw new ApiUnauthorized("Username/Password wrong");
-            }else{
+            } else {
                 throw new e;
             }
         }
 
-        if(hashPassword(password) !== user[IAccountEnv.PASSWORD]){
+        if (hashPassword(password) !== user[IAccountEnv.PASSWORD]){
             throw new ApiUnauthorized("Username/Password wrong");
         }
 
@@ -44,16 +44,16 @@ export class AccountService implements IAccountService {
     async createAccount(data: Partial<IAccount>): Promise<IAccountDTO> {
         const username = data[IAccountEnv.USERNAME];
 
-        try{
+        try {
             await this.accountRepository.findFromUsername(username);
-        }catch(e){
-            if(e instanceof ApiNotFound){
+        } catch (e){
+            if (e instanceof ApiNotFound){
                 data[IAccountEnv.PASSWORD] = hashPassword(data[IAccountEnv.PASSWORD]);
                 await this.accountRepository.createAccount(data);
 
                 const user = await this.accountRepository.findFromUsername(data[IAccountEnv.USERNAME]);
                 return objectAssign<IAccountDTO>(user, IAccountDTOEnv);
-            }else{
+            } else {
                 throw new e;
             }
         }

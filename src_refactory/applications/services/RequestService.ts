@@ -1,8 +1,6 @@
-import _ from "lodash";
-
 import { ApiBadRequest, ApiConflict, ApiNotFound } from "../../modules/api";
 
-import { objectAssign } from "../../utils/utils";
+import { objectAssign } from "../../utils/genericUtils";
 
 import { IRequestDTO, IRequestDTOEnv } from "../../domain/interfaces/DTOs/IRequestDTO";
 import { IRequest, IRequestEnv } from "../../domain/interfaces/models/IRequest";
@@ -18,18 +16,18 @@ export class RequestService implements IRequestService {
     accountRepository = new AccountRepository();
 
     async create(data: Partial<IRequest>): Promise<void> {
-        if(data[IRequestEnv.REQUEST_FROM].toLowerCase() === data[IRequestEnv.REQUEST_TO].toLowerCase()){
+        if (data[IRequestEnv.REQUEST_FROM].toLowerCase() === data[IRequestEnv.REQUEST_TO].toLowerCase()){
             throw new ApiBadRequest(`${IRequestEnv.REQUEST_FROM} cannot be same ${IRequestEnv.REQUEST_TO}`);
         }
 
         const {findRequest, findRequestTO} = await async.parallel<unknown, {findRequest: boolean, findRequestTO: boolean}>({
             findRequest: async () => {
-                try{
+                try {
                     await this.requestRepository.findByRequest(data[IRequestEnv.REQUEST_FROM], data[IRequestEnv.REQUEST_TO]);
-                }catch(err){
-                    if(err instanceof ApiNotFound){
+                } catch (err){
+                    if (err instanceof ApiNotFound){
                         return false;
-                    }else{
+                    } else {
                         throw new err; 
                     }
                 }
@@ -37,25 +35,25 @@ export class RequestService implements IRequestService {
                 return true;
             },
             findRequestTO: async () => {
-                try{
+                try {
                     await this.accountRepository.findFromUsername(data[IRequestEnv.REQUEST_TO]);
-                }catch(err){
-                    if(err instanceof ApiNotFound){
+                } catch (err){
+                    if (err instanceof ApiNotFound){
                         return false;
-                    }else{
+                    } else {
                         throw new err; 
                     }
                 }
 
                 return true;
             }
-        })
+        });
 
-        if(!findRequest && findRequestTO){
+        if (!findRequest && findRequestTO){
             return await this.requestRepository.create(data);
-        }else if(!findRequestTO){
+        } else if (!findRequestTO){
             throw new ApiNotFound(`The user "${data[IRequestEnv.REQUEST_TO]}" not exist!`);
-        }else{
+        } else {
             throw new ApiConflict("The request to become a friend has already been sent");
         }
     }
@@ -72,6 +70,6 @@ export class RequestService implements IRequestService {
         return {
             list,
             max_count: count
-        }
+        };
     }
 }

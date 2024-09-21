@@ -1,9 +1,9 @@
 import _ from "lodash";
 
 function objectAssign<T>(data: any, Idata: any){
-    let newData = {};
+    const newData = {};
     for (const key in Idata) {
-        if(_.isObject(data)){
+        if (_.isObject(data)){
             newData[Idata[key]] = data[Idata[key]];
         }
     }
@@ -13,4 +13,4 @@ function objectAssign<T>(data: any, Idata: any){
 
 export {
     objectAssign
-}
+};

@@ -1,8 +1,8 @@
-import { Type } from '@sinclair/typebox'
+import { Type } from "@sinclair/typebox";
 
-import { accountSchema, IAccountEnv } from "../domain/interfaces/models/IAccount"
-import { accountDTOSchema } from '../domain/interfaces/DTOs/IAccountDTO';
-import { convertToOptional } from '../utils/schemaUtils';
+import { accountSchema, IAccountEnv } from "../domain/interfaces/models/IAccount";
+import { accountDTOSchema } from "../domain/interfaces/DTOs/IAccountDTO";
+import { convertToOptional } from "../utils/schemaUtils";
 
 //path base
 const PATH_BASE_CONTROLLER = "/account";
@@ -23,7 +23,7 @@ const queryUsernameAccount = Type.Pick(accountSchema, [IAccountEnv.USERNAME], { 
 const returnAccount = Type.Intersect([accountDTOSchema], { $id: SCHEMA_RETURN_ACCOUNT });
 
 //load schemas
-export default [createAccount, updateAccount, returnAccount, queryUsernameAccount]
+export default [createAccount, updateAccount, returnAccount, queryUsernameAccount];
 
 type staticCreateAccount = typeof createAccount.static
 type staticUpdateAccount = typeof updateAccount.static
@@ -42,4 +42,4 @@ export {
     SCHEMA_RETURN_ACCOUNT,
     SCHEMA_UPDATE_ACCOUNT,
     SCHEMA_QUERY_USERNAME_ACCOUNT
-}
+};

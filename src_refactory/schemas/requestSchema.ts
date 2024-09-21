@@ -1,7 +1,7 @@
-import { Type } from '@sinclair/typebox'
-import { queryPagination, schemaReturnPagination } from './generic/paginationSchema';
-import { requestDTOSchema } from '../domain/interfaces/DTOs/IRequestDTO';
-import { IRequestEnv, requestSchema } from '../domain/interfaces/models/IRequest';
+import { Type } from "@sinclair/typebox";
+import { queryPagination, schemaReturnPagination } from "./generic/paginationSchema";
+import { requestDTOSchema } from "../domain/interfaces/DTOs/IRequestDTO";
+import { IRequestEnv, requestSchema } from "../domain/interfaces/models/IRequest";
 
 //path base
 const PATH_BASE_CONTROLLER = "/request";
@@ -26,7 +26,7 @@ const queryPaginatedRequest = Type.Intersect([Type.Pick(requestSchema, [IRequest
 const returnPaginatedRequest = schemaReturnPagination(requestDTOSchema, SCHEMA_RETURN_PAGINATED_REQUEST);
 
 //load schemas
-export default [createRequest, actionRequest, returnPaginatedRequest, queryPaginatedRequest]
+export default [createRequest, actionRequest, returnPaginatedRequest, queryPaginatedRequest];
 
 type staticCreateRequest = typeof createRequest.static;
 type staticActionRequest = typeof actionRequest.static;
@@ -45,4 +45,4 @@ export {
     SCHEMA_ACTION_REQUEST,
     SCHEMA_RETURN_PAGINATED_REQUEST,
     SCHEMA_QUERY_PAGINATED_REQUEST
-}
+};

@@ -1,4 +1,3 @@
-import { Account } from "../../../domain/models/Account";
 import { IAccount } from "../../../domain/interfaces/models/IAccount";
 import IConnectionRepository from "./generic/IConnectionRepository";
 
@@ -11,4 +10,4 @@ export default interface IAccountRepository extends IConnectionRepository<IAccou
     updateAccount(username: string, data: Partial<IAccount>): Promise<void>;
     //delete
     deleteAccount(username: string): void;
-}
+} // eslint-disable-line @stylistic/semi

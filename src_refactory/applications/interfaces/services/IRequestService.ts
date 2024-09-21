@@ -1,5 +1,5 @@
-import { IRequest } from "../../../domain/interfaces/models/IRequest"
-import { staticReturnPaginatedRequest } from "../../../schemas/requestSchema"
+import { IRequest } from "../../../domain/interfaces/models/IRequest";
+import { staticReturnPaginatedRequest } from "../../../schemas/requestSchema";
 
 export default interface IRequestService {
     //get
@@ -10,4 +10,4 @@ export default interface IRequestService {
 
     //post
     action(request_from: string, request_to: string, accept: boolean): Promise<void>
-}
+} // eslint-disable-line @stylistic/semi

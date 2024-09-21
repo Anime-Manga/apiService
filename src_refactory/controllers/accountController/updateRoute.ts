@@ -9,19 +9,19 @@ import fastify from "../../server/fastify";
 
 const accountService = new AccountService();
 
-const options: RouteShorthandOptions  = {
+const options: RouteShorthandOptions = {
     schema: {
-        tags: ['account'],
-        summary: 'Update values of account',
+        tags: ["account"],
+        summary: "Update values of account",
         querystring: { $ref: SCHEMA_QUERY_USERNAME_ACCOUNT },
         body: { $ref: SCHEMA_UPDATE_ACCOUNT },
         response: {
             200: { $ref: SCHEMA_RETURN_ACCOUNT },
             500: { $ref: SCHEMA_INTERNAL_SERVER },
-            404: { $ref: SCHEMA_NOT_FOUND },
+            404: { $ref: SCHEMA_NOT_FOUND }
         }
     }
-}
+};
 
 fastify.put<{Querystring: staticQueryUsernameAccount, Body: staticUpdateAccount}>(`${PATH_BASE_CONTROLLER}/update`, options, async (request) => {
     const {username} = request.query;
@@ -30,4 +30,4 @@ fastify.put<{Querystring: staticQueryUsernameAccount, Body: staticUpdateAccount}
     console.log(request.body);
     
     return await accountService.updateAccount(username, account);
-})
+});

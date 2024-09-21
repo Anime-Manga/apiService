@@ -9,8 +9,8 @@
     "create_link_references": "cd ../references/src_refactory && ln -s ../../src_refactory/node_modules && ln -s ../../src_refactory/package.json && ln -s ../../src_refactory/tsconfig.json"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "cesxhin",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@fastify/swagger": "^8.15.0",

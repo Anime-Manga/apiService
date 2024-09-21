@@ -16,7 +16,7 @@ jobs:
         node-version: 22
     
     - name: Set CWD
-      run: cd src
+      run: cd ./src
     
     - name: Install packages
       run: npm i

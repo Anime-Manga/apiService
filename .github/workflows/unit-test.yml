@@ -8,6 +8,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ./src
+
     steps:
     - uses: actions/checkout@v3
 
@@ -16,10 +20,7 @@ jobs:
         node-version: 22
 
     - name: Print working directory
-      run: ls -l
-
-    - name: Set CWD
-      run: cd ./src
+      run: pwd
     
     - name: Install packages
       run: npm i

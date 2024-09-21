@@ -18,9 +18,6 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 22
-
-    - name: Print working directory
-      run: pwd
     
     - name: Install packages
       run: npm i

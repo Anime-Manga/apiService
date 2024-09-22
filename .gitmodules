@@ -1,0 +1,4 @@
+[submodule "references"]
+	path = references
+	url = https://github.com/Anime-Manga/references.git
+	branch = refactory

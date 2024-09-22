@@ -4,6 +4,7 @@ const SCHEMA_NOT_FOUND = "SchemaNotFound";
 const SCHEMA_INTERNAL_SERVER = "SchemaInternalServer";
 const SCHEMA_CONFLICT = "SchemaConflict";
 const SCHEMA_BAD_REQUEST = "SchemaBadRequest";
+const SCHEMA_UNAUTHORIZED = "SchemaUnauthorized";
 
 const schemaReturnVoid = Type.Object({
     response: Type.String({default: "ok"})
@@ -15,27 +16,32 @@ const templateErrorSchema = Type.Object({
 });
 
 const notFound = Type.Intersect([
-templateErrorSchema, Type.Object({
-    statusCode: Type.Number({default: 404})
-})
+    templateErrorSchema, Type.Object({
+        statusCode: Type.Number({default: 404})
+    })
 ], { $id: SCHEMA_NOT_FOUND });
 const internalServer = Type.Intersect([
-templateErrorSchema, Type.Object({
-    statusCode: Type.Number({default: 500})
-})
+    templateErrorSchema, Type.Object({
+        statusCode: Type.Number({default: 500})
+    })
 ], { $id: SCHEMA_INTERNAL_SERVER });
 const conflict = Type.Intersect([
-templateErrorSchema, Type.Object({
-    statusCode: Type.Number({default: 401})
-})
+    templateErrorSchema, Type.Object({
+        statusCode: Type.Number({default: 409})
+    })
 ], { $id: SCHEMA_CONFLICT });
 const badRequest = Type.Intersect([
-templateErrorSchema, Type.Object({
-    statusCode: Type.Number({default: 400})
-})
+    templateErrorSchema, Type.Object({
+        statusCode: Type.Number({default: 400})
+    })
 ], { $id: SCHEMA_BAD_REQUEST });
+const unauthorized = Type.Intersect([
+    templateErrorSchema, Type.Object({
+        statusCode: Type.Number({default: 401})
+    })
+], { $id: SCHEMA_UNAUTHORIZED });
 
-export default [notFound, internalServer, conflict, badRequest];
+export default [notFound, internalServer, conflict, badRequest, unauthorized];
 
 export {
     //replay
@@ -45,5 +51,6 @@ export {
     SCHEMA_NOT_FOUND,
     SCHEMA_BAD_REQUEST,
     SCHEMA_CONFLICT,
-    SCHEMA_INTERNAL_SERVER
+    SCHEMA_INTERNAL_SERVER,
+    SCHEMA_UNAUTHORIZED
 };

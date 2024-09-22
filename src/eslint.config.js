@@ -57,7 +57,7 @@ export default [
           "applications/interfaces/repositories/**/*.{js,ts}": "I+([A-Z])+([a-zA-Z])Repository",
           "applications/services/**/*.{js,ts}": "([A-Z])+([a-zA-Z])Service",
           "applications/repositories/**/*.{js,ts}": "([A-Z])+([a-zA-Z])Repository",
-          "controllers/**/*": "*([a-z])Route",
+          "controllers/**/*": "*([a-zA-Z])Route",
           "domain/interfaces/DTOs/**/*": "I+([A-Z])+([a-zA-Z])DTO",
           "domain/interfaces/models/**/*": "I+([A-Z])+([a-zA-Z])",
           "domain/models/**/*": "PASCAL_CASE",

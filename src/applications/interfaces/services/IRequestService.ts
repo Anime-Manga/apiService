@@ -1,13 +1,15 @@
-import { IRequest } from "../../../domain/interfaces/models/IRequest";
-import { staticReturnPaginatedRequest } from "../../../schemas/requestSchema";
+import { ISchemaReturnPaginatedRequest } from "../../../schemas/requestSchema";
 
 export default interface IRequestService {
     //get
-    listPaginated(request_from: string, skip: number, length: number): Promise<staticReturnPaginatedRequest>
+    listRequestWaitPaginated(request_from: string, skip: number, length: number): Promise<ISchemaReturnPaginatedRequest>
+    listRequestForActionPaginated(request_to: string, skip: number, length: number): Promise<ISchemaReturnPaginatedRequest>
     
-    //put
-    create(data: Partial<IRequest>): Promise<void>
-
     //post
-    action(request_from: string, request_to: string, accept: boolean): Promise<void>
+    create(auth_username: string, request_to: string): Promise<void>
+    action(request_from: string, auth_username: string, accept: boolean): Promise<void>
+
+    //delete
+    delete(auth_username: string, request_to: string): Promise<void>
+
 } // eslint-disable-line @stylistic/semi

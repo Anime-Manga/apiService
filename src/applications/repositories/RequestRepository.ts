@@ -14,6 +14,7 @@ const logger = new Logger("request-db");
 export default class RequestRepository implements IRequestRepository {
     connectionRepository = pg.getRepository<IRequest>(Request);
 
+    //get
     async findByRequest(request_from: string, request_to: string): Promise<IRequest> {
         let request: IRequest;
         try {
@@ -29,33 +30,23 @@ export default class RequestRepository implements IRequestRepository {
 
         return request;
     }
-    async create(data: Partial<IRequest>): Promise<void> {
-        try {
-            await this.connectionRepository.insert(data);
-        } catch (err){
-            logger.error("Failed exec query create, details:", err);
-            throw new ApiErrorGeneric(err);
-        }
-    }
-    async delete(request_from: string, request_to: string): Promise<void> {
-        let rs: DeleteResult;
-        try {
-            rs = await this.connectionRepository.delete({[IRequestEnv.REQUEST_FROM]: request_from, [IRequestEnv.REQUEST_TO]: request_to});
-        } catch (err){
-            logger.error("Failed exec query delete, details:", err);
-            throw new ApiErrorGeneric(err);
-        }
-
-        if (rs.affected <= 0){
-            throw new ApiNotFound(`Cannot delete request with request_from: "${request_from}" request_to: "${request_to}"`);
-        }
-    }
-    async listPaginated(request_from: string, skip: number = 0, length: number = 10): Promise<Array<IRequest>> {
+    async listPaginatedFromRequestFrom(request_from: string, skip: number = 0, length: number = 10): Promise<Array<IRequest>> {
         let rs: Array<IRequest> = [];
         try {
             rs = await this.connectionRepository.find({where: {[IRequestEnv.REQUEST_FROM]: request_from}, order: {[IRequestEnv.REQUEST_TIME]: "ASC"}, skip, take: length});
         } catch (err){
-            logger.error("Failed exec query listPaginated, details:", err);
+            logger.error("Failed exec query listPaginatedFromRequestFrom, details:", err);
+            throw new ApiErrorGeneric(err);
+        }
+
+        return rs;
+    }
+    async listPaginatedFromRequestTo(request_to: string, skip: number = 0, length: number = 10): Promise<Array<IRequest>> {
+        let rs: Array<IRequest> = [];
+        try {
+            rs = await this.connectionRepository.find({where: {[IRequestEnv.REQUEST_TO]: request_to}, order: {[IRequestEnv.REQUEST_TIME]: "ASC"}, skip, take: length});
+        } catch (err){
+            logger.error("Failed exec query listPaginatedFromRequestTo, details:", err);
             throw new ApiErrorGeneric(err);
         }
 
@@ -67,6 +58,31 @@ export default class RequestRepository implements IRequestRepository {
         } catch (err){
             logger.error("Failed exec query countTotal, details:", err);
             throw new ApiErrorGeneric(err);
+        }
+    }
+
+    //put
+    async create(data: Partial<IRequest>): Promise<void> {
+        try {
+            await this.connectionRepository.insert(data);
+        } catch (err){
+            logger.error("Failed exec query create, details:", err);
+            throw new ApiErrorGeneric(err);
+        }
+    }
+
+    //delete
+    async delete(request_from: string, request_to: string): Promise<void> {
+        let rs: DeleteResult;
+        try {
+            rs = await this.connectionRepository.delete({[IRequestEnv.REQUEST_FROM]: request_from, [IRequestEnv.REQUEST_TO]: request_to});
+        } catch (err){
+            logger.error("Failed exec query delete, details:", err);
+            throw new ApiErrorGeneric(err);
+        }
+
+        if (rs.affected <= 0){
+            throw new ApiNotFound(`Cannot delete request with request_from: "${request_from}" request_to: "${request_to}"`);
         }
     }
 }

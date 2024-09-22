@@ -9,5 +9,5 @@ export default interface IAccountRepository extends IConnectionRepository<IAccou
     //post
     updateAccount(username: string, data: Partial<IAccount>): Promise<void>;
     //delete
-    deleteAccount(username: string): void;
+    deleteAccount(username: string): Promise<void>;
 } // eslint-disable-line @stylistic/semi

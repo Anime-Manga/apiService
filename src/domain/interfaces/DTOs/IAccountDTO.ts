@@ -10,8 +10,8 @@ export enum IAccountDTOEnv {
 
 export const accountDTOSchema = Type.Object({
     [IAccountDTOEnv.USERNAME]: Type.String({ maxLength: 250 }),
-    [IAccountDTOEnv.EXPIRE_PASSWORD]: Type.String({ format: "date-time" }),
-    [IAccountDTOEnv.LAST_ACCESS]: Type.Union([Type.Null(), Type.String({ format: "date-time" })]),
+    [IAccountDTOEnv.EXPIRE_PASSWORD]: Type.String({format: "date-time"}),
+    [IAccountDTOEnv.LAST_ACCESS]: Type.Union([Type.Null(), Type.String({format: "date-time"})]),
     [IAccountDTOEnv.PROFILE]: Type.Union([Type.Null(), Type.String()]),
     [IAccountDTOEnv.CHANGE_PASSWORD]: Type.Boolean({ default: false })
 });

@@ -4,7 +4,7 @@ import path from "path";
 import Fastify from "fastify";
 import { DateTime } from "luxon";
 import { env, exit } from "process";
-import { Type, TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 
 import { IConfig } from "./interfaces/IConfig";
 import { ApiBadRequest, ApiConflict, ApiErrorGeneric, ApiNotFound, ApiUnauthorized } from "../../modules/api";

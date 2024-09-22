@@ -4,6 +4,7 @@ import { PATH_BASE_CONTROLLER, schemaCreateRequest } from "../../schemas/request
 import { SCHEMA_BAD_REQUEST, SCHEMA_INTERNAL_SERVER, SCHEMA_NOT_FOUND, schemaReturnVoid } from "../../schemas/generic/genericSchema";
 
 import fastify from "../../server/fastify";
+import { schemaQueryUsernameAuth } from "../../schemas/generic/authSchema";
 
 const requestService = new RequestService();
 
@@ -11,6 +12,7 @@ fastify.post(`${PATH_BASE_CONTROLLER}/create`, {
     schema: {
         tags: ["request"],
         summary: "Create request friend",
+        querystring: schemaQueryUsernameAuth,
         body: schemaCreateRequest,
         response: {
             200: schemaReturnVoid,
@@ -20,7 +22,10 @@ fastify.post(`${PATH_BASE_CONTROLLER}/create`, {
         }
     }
 }, async (request, replay) => {
-    await requestService.create(request.body);
+    const {auth_username} = request.query;
+    const {request_to} = request.body;
+    
+    await requestService.create(auth_username, request_to);
 
     replay.status(200).send({ response: "ok" });
 });

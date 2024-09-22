@@ -1,5 +1,3 @@
-import { RouteShorthandOptions } from "fastify";
-
 import { RequestService } from "../../applications/services/RequestService";
 
 import { PATH_BASE_CONTROLLER, schemaQueryPaginatedRequest, schemaReturnPaginatedRequest } from "../../schemas/requestSchema";
@@ -9,10 +7,10 @@ import fastify from "../../server/fastify";
 
 const requestService = new RequestService();
 
-fastify.get(`${PATH_BASE_CONTROLLER}/list`, {
+fastify.get(`${PATH_BASE_CONTROLLER}/list_request_wait`, {
     schema: {
         tags: ["request"],
-        summary: "List request for accept or reject",
+        summary: "List your request",
         querystring: schemaQueryPaginatedRequest,
         response: {
             200: schemaReturnPaginatedRequest,
@@ -20,7 +18,7 @@ fastify.get(`${PATH_BASE_CONTROLLER}/list`, {
         }
     }
 }, async (request, replay) => {
-    const {length, request_from, skip} = request.query;
+    const {length, auth_username, skip} = request.query;
 
-    replay.status(200).send(await requestService.listPaginated(request_from, skip, length));
+    replay.status(200).send(await requestService.listRequestWaitPaginated(auth_username, skip, length));
 });

@@ -1,9 +1,9 @@
-import { Entity, PrimaryColumn, Column } from "typeorm";
 import { DateTime } from "luxon";
+import { Entity, PrimaryColumn, Column } from "typeorm";
 
 import { IAccount, IAccountEnv } from "../interfaces/models/IAccount";
 
-@Entity("account")
+@Entity("accounts")
 export class Account implements IAccount{
     @PrimaryColumn({type: "varchar", length: 250})
     [IAccountEnv.USERNAME]: string;

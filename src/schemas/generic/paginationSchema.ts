@@ -5,10 +5,12 @@ const queryPagination = Type.Object({
     length: Type.Number({minimum: 10, default: 10})
 });
 
-const schemaReturnPagination = <T extends TObject>(schema: T) => Type.Object({
-    max_count: Type.Number(),
-    list: Type.Array(schema)
-});
+function schemaReturnPagination<T extends TObject>(schema: T){
+    return Type.Object({
+        max_count: Type.Number(),
+        list: Type.Array(schema)
+    });
+}
 
 export {
     schemaReturnPagination,

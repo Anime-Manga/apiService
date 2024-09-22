@@ -6,6 +6,7 @@
   "scripts": {
     "start": "npx tsx index.ts",
     "clear": "rm -rf node_modules package-lock.json",
+    "typecheck": "npx tsc --noEmit",
     "eslint": "npx eslint .",
     "eslint-fix": "npx eslint --fix ."
   },

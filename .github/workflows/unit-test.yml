@@ -24,3 +24,6 @@ jobs:
 
     - name: Check syntax code
       run: npm run eslint
+
+    - name: Check typescript
+      run: npm run typecheck

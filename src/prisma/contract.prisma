@@ -1,0 +1,10 @@
+// use prisma-8
+
+model Account {
+  id          Int                @id @default(autoincrement())
+  username    String             @unique
+  password    String
+  role        Int
+  createdAt   DateTime           @default(now()) @onCreate(now())
+  updatedAt   DateTime?          @default(null)
+}

@@ -1,4 +1,4 @@
-import { Account } from "../models/accounts.model.js";
+import { Account } from "../models/index.js";
 
 export type AccountDTO = Pick<Account, "createdAt" | "updatedAt" | "role" | "username">;
 

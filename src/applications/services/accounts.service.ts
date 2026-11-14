@@ -1,7 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { AccountsRepository } from "../repositories/accounts.repository.js";
+import { AccountsRepository } from "../../persistences/repositories/accounts.repository.js";
 import accountsUtils from "../../utils/accounts.utils.js";
-import { AccountDTO, AccountToAccountDTO } from "../../persistences/dto/account.dto.js";
+import { AccountDTO, AccountToAccountDTO } from "../../domain/dto/account.dto.js";
+import { Account } from "../../domain/models/index.js";
 
 @Injectable()
 export class AccountsService {
@@ -27,5 +28,17 @@ export class AccountsService {
         }
 
         return AccountToAccountDTO(account);
+    }
+
+    async create(account: Pick<Account, "username" | "password">): Promise<void>{
+        try{
+            await this.accountsRepository.findByUsername(account.username);
+        }catch(err){
+            if((err instanceof HttpException && err.getStatus() !== HttpStatus.NOT_FOUND) || err){
+                throw err;
+            }
+        }
+
+        await this.accountsRepository.create({username: account.username, password: accountsUtils.encryptPassword(account.password)});
     }
 }

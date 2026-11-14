@@ -1,8 +1,10 @@
 import z from "zod";
-import { Controller, Delete, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Post, Query } from "@nestjs/common";
 
+import { ISchemaVoid } from "../schemas/generic.js";
+import { AccountDTO } from "../domain/dto/account.dto.js";
 import { AccountsService } from "../applications/services/accounts.service.js";
-import { AccountDTO } from "../persistences/dto/account.dto.js";
+import { AccountSchema } from "../domain/models/index.js";
 
 @Controller("accounts")
 export class AccountsController {
@@ -22,17 +24,10 @@ export class AccountsController {
     }
 
     @Post("create")
-    create(){
-        
-    }
-
-    @Post("watchlist")
-    addWatchlist(){
-
-    }
-
-    @Delete("watchlist")
-    deleteWatchlist(){
-
+    async create(
+        @Body(AccountSchema.pick({username: true, password: true})) body: {username: string, password: string},
+    ): Promise<ISchemaVoid>{
+        await this.accountsService.create(body);
+        return { status: "ok" }
     }
 }

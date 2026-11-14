@@ -6,6 +6,7 @@ import { StandardSchemaValidationPipe } from '@nestjs/common';
 
 import { AppModule } from './app.module.js';
 import postgresqlUtils from './utils/postgresql.utils.js';
+import { NestPinoLogger } from './applications/services/logger.service.js';
 
 async function bootstrap() {
   //connect to db
@@ -16,6 +17,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
     {
+      bufferLogs: true,
       logger: ["debug"],
       routeConflictPolicy: {
         duplicate: 'error',
@@ -25,6 +27,8 @@ async function bootstrap() {
   );
   
   app.useGlobalPipes(new StandardSchemaValidationPipe());
+  app.useLogger(new NestPinoLogger())
+
   await app.listen(process.env.PORT ?? 3000);
   
 }

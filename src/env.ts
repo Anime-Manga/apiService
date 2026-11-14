@@ -1,6 +1,8 @@
 import _ from "lodash";
 import { existsSync } from "fs";
-import { logger } from "./logger.js";
+import loggerUtils from "./utils/logger.utils.js";
+
+const logger = loggerUtils.getLogger("env");
 
 if(existsSync(".env")){
     process.loadEnvFile();

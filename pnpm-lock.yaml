@@ -24,7 +24,7 @@ importers:
         specifier: 7.10.1
         version: 7.10.1(prisma@7.10.1(@types/node@24.0.0)(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.2))(typescript@6.0.2)
       dotenv:
-        specifier: ^18.0.10
+        specifier: 18.0.10
         version: 18.0.10
       lodash:
         specifier: 4.18.1
@@ -60,6 +60,9 @@ importers:
       '@types/node':
         specifier: 24.0.0
         version: 24.0.0
+      fastify:
+        specifier: ^5.12.8
+        version: 5.12.8
       oxlint:
         specifier: 1.58.0
         version: 1.58.0(oxlint-tsgolint@7.0.2001)
@@ -82,7 +85,7 @@ importers:
         specifier: 8.0.0
         version: 8.0.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@24.0.0)(jiti@2.7.0)(yaml@2.9.1)
       zod-prisma-types:
-        specifier: ^3.3.11
+        specifier: 3.3.11
         version: 3.3.11(@prisma/client@7.10.1(prisma@7.10.1(@types/node@24.0.0)(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.2))(typescript@6.0.2))(prisma@7.10.1(@types/node@24.0.0)(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.2))(zod@4.6.7)
 
 packages:
